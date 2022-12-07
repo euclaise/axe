@@ -1,4 +1,4 @@
-lisp1 is a basic Lisp-like language interpreter that I wrote in a few hours.
+Axe is a basic Lisp-like language interpreter that I wrote in a few hours.
 
 I might keep expanding it at some point, I do want another scripting lang
 that I can use on Plan 9.
