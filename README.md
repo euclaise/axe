@@ -12,7 +12,7 @@ It doesn't have much else.
 
 Operations:
 - `(exit [num])` exits with error code [num], or 0 if not present
-- `(:: <a:sym> <b>)` sets the variable a to b
+- `(= <a:sym> <b>)` sets the variable a to b
 - `(+ <a> <b> [c ...])`
 - `(- <a> <b> [c ...])`
 - `(* <a> <b> [c ...])`
