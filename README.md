@@ -13,6 +13,7 @@ It doesn't have much else.
 Operations:
 - `(exit [num])` exits with error code [num], or 0 if not present
 - `(= <a:sym> <b>)` sets the variable a to b
+- `(== <a> <b> [c ...])` Checks if a, b, ... are equal
 - `(+ <a> <b> [c ...])`
 - `(- <a> <b> [c ...])`
 - `(* <a> <b> [c ...])`
