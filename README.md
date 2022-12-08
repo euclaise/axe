@@ -18,10 +18,10 @@ Operations:
 - `(fn ([arg:sym ...]) [expr])`
 - `(do [a] [b] ...)` runs a, b, ..., returning the final value
 - `(= [a:sym] [b])` sets the variable a to b
-- `(+ [a] [b] ...])`
-- `(- [a] [b] ...])`
-- `(* [a] [b] ...])`
-- `(/ [a] [b] ...])`
+- `(+ [a] [b] ...)`
+- `(- [a] [b] ...)`
+- `(* [a] [b] ...)`
+- `(/ [a] [b] ...)`
 - `(== [a] [b] ...)` Returns true if a, b, ... are equal
 - `(!= [a] [b] ...)` Returns true if any of b, ... are not equal to 1
 - `(> [a] [b])` Returns true if a is greater than b
