@@ -15,10 +15,13 @@ func die(f string, args ...any) {
 	os.Exit(1)
 }
 
-func fatal(err error, f string, args ...any) {
-	if err != nil {
-		die(f, args...)
+func throw(f string, args ...any) Value {
+	fmt.Printf(f, args...)
+	fmt.Println()
+	if fromfile {
+		os.Exit(1)
 	}
+	return Value{}
 }
 
 func main() {
@@ -30,10 +33,13 @@ func main() {
 			fmt.Println()
 		}
 	} else if len(os.Args) == 2 {
+		fromfile = true
 		reader, err := os.Open(os.Args[1])
 		rd = bufio.NewReader(reader)
-		fatal(err, "Could not read file %s\nUsage: %s [file]",
+		if err != nil {
+			die("Could not read file %s\nUsage: %s [file]",
 				os.Args[1], os.Args[0])
+		}
 
 		v := Value{t: TypeInt}
 		for v.t != TypeError {

@@ -30,7 +30,7 @@ type List []Value
 
 type Fn struct {
 	args []string
-	expr List
+	expr *Value
 }
 
 func (v Value) Print() {

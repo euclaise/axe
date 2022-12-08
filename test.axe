@@ -1,5 +1,6 @@
-(= add1 (fn (a)
-    (+ 1 a)))
-(print (add1 1)
-(= add2 add1)
-(print (== add2 add1))
+(= add2 (fn (a)
+    (do
+        (= a (+ a 1))
+        (= a (+ a 1)))))
+
+(print (add2 1))

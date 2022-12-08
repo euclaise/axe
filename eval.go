@@ -31,6 +31,8 @@ func (v Value) Eval() Value {
 		}
 		if v.l[0].t == TypeSym {
 			if b, ok := map[string]L1Fn{
+				"fn" : Value.Fn,
+				"do" : Value.Do,
 				"=" : Value.Set,
 				"+" : Value.Add,
 				"-" : Value.Sub,
@@ -45,9 +47,9 @@ func (v Value) Eval() Value {
 				"and" : Value.And,
 				"or" : Value.Or,
 				"not" : Value.Not,
-				"fn" : Value.Fn,
 				"exit" : Value.Exit,
 				"print" : Value.bPrint,
+				"cond" : Value.Cond,
 			}[v.l[0].s]; ok {
 				if len(v.l) == 1 {
 					return b(v, List{})
@@ -58,21 +60,17 @@ func (v Value) Eval() Value {
 		}
 		fnv := v.l[0].Eval()
 		if fnv.t != TypeFn {
-			fmt.Printf("Line %d: Call to non-fn\n", v.line);
-			return Value{}
+			return throw("Line %d: Call to non-fn\n", v.line);
 		}
 		fn := fnv.fn
 		if len(v.l) != len(fn.args) + 1 {
-			fmt.Printf("Line %d: Wrong number of args\n", v.line);
-			return Value{}
+			return throw("Line %d: Wrong number of args\n", v.line);
 		}
 		stack = append(stack, map[string]Value{})
 		for i, arg := range fn.args {
 			stack[len(stack)-1][arg] = v.l[i+1].Eval()
 		}
-		for _, expr := range fn.expr {
-			res = expr.Eval()
-		}
+		res = fn.expr.Eval()
 		stack = stack[:len(stack)-1]
 	}
 	return res
