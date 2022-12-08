@@ -33,6 +33,7 @@ func (v Value) Eval() Value {
 			if b, ok := map[string]L1Fn{
 				"fn" : Value.Fn,
 				"do" : Value.Do,
+				"quote" : Value.Quote,
 				"=" : Value.Set,
 				"+" : Value.Add,
 				"-" : Value.Sub,
