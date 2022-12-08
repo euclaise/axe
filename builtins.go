@@ -30,13 +30,21 @@ func (v Value) bPrint(l List) Value {
 		}
 		fmt.Print(")]")
 	case TypeList:
-		fmt.Print("'(")
-		for i := range v.l {
+		if len(r.l) == 2 && r.l[0].t == TypeSym && r.l[0].s == "quote" {
+			fmt.Print("'")
+			r.l[1].Print()
+			fmt.Println()
+			break
+		}
+		fmt.Print("(")
+		for i := range r.l {
 			if i != 0 {
 				fmt.Print(" ")
 			}
-			v.l[i].Print()
+			r.l[i].Print()
 		}
+		fmt.Print(")")
+		fmt.Println()
 	}
 	return r
 }
@@ -504,8 +512,13 @@ func (v Value) Quote(l List) Value {
 	}
 
 	res := Value{t: TypeList, l: List{Value{t: TypeSym, s: "quote"}}}
-	for _, x := range l {
-		res.l = append(res.l, x)
+	if len(l) > 1 {
+		res.l = append(res.l, Value{t: TypeList, l: List{}})
+		for _, x := range l {
+			res.l[1].l = append(res.l[1].l, x)
+		}
+	} else {
+		res.l = append(res.l, l[0])
 	}
 	return res
 }

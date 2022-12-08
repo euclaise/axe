@@ -51,6 +51,13 @@ func (v Value) Print() {
 		}
 		fmt.Print(")]")
 	case TypeList:
+		if len(v.l) == 2 {
+			if v.l[0].t == TypeSym && v.l[0].s == "quote" {
+				fmt.Print("'")
+				v.l[1].Print()
+				return
+			}
+		}
 		fmt.Print("(")
 		for i := range v.l {
 			if i != 0 {
