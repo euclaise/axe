@@ -33,5 +33,5 @@ Operations:
 - `(not [a])` Inverts a
 - `(exit [num])` exits with error code [num], or 0 if not present
 - `(print [val])` prints val
-- `(cond ([test1] [expr1]) ([test2] [expr2] ...))` runs each test until one is true true, returning the matching expr if so.  Returns error if none match
+- `(cond ([test1] [expr1]) ([test2] [expr2]) ...)` runs each test until one is true true, returning the matching expr if so.  Returns error if none match
 - `(while [test] [expr])` Runs expr while test is true
