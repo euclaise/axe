@@ -14,14 +14,15 @@ It has lexical scoping, functions, and global and local variables.
 It supports floats, bools, strings, symols, and functions.
 It doesn't have much else.
 
-Operations:
-- `(fn ([arg:sym ...]) [expr])`
-- `(do [a] [b] ...)` runs a, b, ..., returning the final value
-- `(= [a:sym] [b])` sets the variable a to b
-- `(+ [a] [b] ...)`
-- `(- [a] [b] ...)`
-- `(* [a] [b] ...)`
-- `(/ [a] [b] ...)`
+# Operations
+- `(fn ([arg:sym ...]) [expr])` Create a new function.  Use `do` for multi-expr
+    functions
+- `(do [a] [b] ...)` Runs a, b, ..., returning the final value
+- `(= [a:sym] [b])` Sets the variable a to b
+- `(+ [a] [b] ...)` Adds all values, left to right
+- `(- [a] [b] ...)` Subtracts all values, left to right
+- `(* [a] [b] ...)` Multiplies all values, left to right
+- `(/ [a] [b] ...)` Divides all values, left to right
 - `(== [a] [b] ...)` Returns true if a, b, ... are equal
 - `(!= [a] [b] ...)` Returns true if any of b, ... are not equal to 1
 - `(> [a] [b])` Returns true if a is greater than b
@@ -31,7 +32,17 @@ Operations:
 - `(or [a] [b] ...)` Returns true if any of a, b, ... are true
 - `(and [a] [b] ...)` Returns true if any of a, b, ... are false
 - `(not [a])` Inverts a
-- `(exit [num])` exits with error code [num], or 0 if not present
-- `(print [val])` prints val
-- `(cond ([test1] [expr1]) ([test2] [expr2]) ...)` runs each test until one is true true, returning the matching expr if so.  Returns error if none match
+- `(exit [num])` Exits with error code num, or 0 if not present
+- `(print [val])` Prints val
+- `(cond ([test1] [expr1]) ([test2] [expr2]) ...)` Runs each test until one is
+    true true, returning the matching expr if so.  Returns error if none match
 - `(while [test] [expr])` Runs expr while test is true
+
+# Example:
+```
+(= a 0)
+(while (< a 10)
+    (do
+        (= a (+ a 1))
+        (print a)))
+```
