@@ -22,8 +22,7 @@ func (v Value) Eval() Value {
 		} else if x, ok := stack[0][v.s]; ok { //globals
 			return x
 		}
-		fmt.Printf("Line %d: Could not find variable %s\n", v.line, v.s)
-		return Value{}
+		return throw("Line %d: Could not find variable \"%s\"\n", v.line, v.s)
 	case TypeList:
 		if len(v.l) == 0 {
 			fmt.Printf("Line %d: Empty list\n", v.line)
@@ -62,18 +61,26 @@ func (v Value) Eval() Value {
 		}
 		fnv := v.l[0].Eval()
 		if fnv.t != TypeFn {
-			return throw("Line %d: Call to non-fn\n", v.line);
+			fmt.Print("Non-fn: ")
+			fnv.Print()
+			fmt.Println()
+			return throw("Line %d: Call to non-fn\n", v.l[0].line);
 		}
 		fn := fnv.fn
 		if len(v.l) != len(fn.args) + 1 {
-			return throw("Line %d: Wrong number of args\n", v.line);
+			v.Print()
+			fmt.Println()
+			return throw("Line %d: Wrong number of args to %s, " +
+						"expected %d, got %d\n",
+					v.l[0].line, v.l[0].s, len(fn.args), len(v.l) - 1);
 		}
-		stack = append(stack, map[string]Value{})
+		newtop := map[string]Value{}
 		for i, arg := range fn.args {
-			stack[len(stack)-1][arg] = v.l[i+1].Eval()
+			newtop[arg] = v.l[i + 1].Eval()
 		}
+		stack = append(stack, newtop)
 		res = fn.expr.Eval()
-		stack = stack[:len(stack)-1]
+		stack = stack[:len(stack) - 1]
 	}
 	return res
 }

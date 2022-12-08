@@ -72,7 +72,15 @@ func GetValue() Value {
 			r = PeekRune()
 			neg = false
 		}
-		if r == '.' {
+		if tmp == "-" {
+			v.t = TypeSym
+			v.s = "-"
+			for !unicode.IsSpace(r) && r != ')' {
+				GetRune()
+				v.s += string(r)
+				r = PeekRune()
+			}
+		} else if r == '.' {
 			v.t = TypeFloat
 			GetRune()
 			tmp = tmp + string(r)
@@ -96,6 +104,9 @@ func GetValue() Value {
 			GetRune()
 			v.s += string(r)
 			r = PeekRune()
+		}
+		if v.s == "" {
+			die("Line %d: Unbalanced rparen", line)
 		}
 
 		if v.s == "true" {

@@ -52,7 +52,7 @@ func (v Value) bPrint(l List) Value {
 
 func (v Value) Set(l List) Value {
 	if len(l) != 2 || l[0].t != TypeSym {
-		return throw("Line %d: Wrong format for '::'", v.line)
+		return throw("Line %d: Wrong format for '='", v.line)
 	}
 
 	res := l[1].Eval()
@@ -98,7 +98,7 @@ func (v Value) Exit(l List) Value {
 func (v Value) Add(l List) Value {
 	res := Value{line: v.line}
 	
-	if len(l) == 0 {
+	if len(l) < 2 {
 		return throw("Line %d: Not enough args to '+'", v.line)
 	}
 
@@ -138,7 +138,7 @@ func (v Value) Add(l List) Value {
 func (v Value) Sub(l List) Value {
 	res := Value{line: v.line}
 	
-	if len(l) == 0 {
+	if len(l) < 2 {
 		return throw("Line %d: Not enough args to '-'", v.line)
 	}
 
@@ -176,7 +176,7 @@ func (v Value) Sub(l List) Value {
 func (v Value) Mul(l List) Value {
 	res := Value{line: v.line}
 	
-	if len(l) == 0 {
+	if len(l) < 2 {
 		return throw("Line %d: Not enough args to '*'", v.line)
 	}
 
@@ -215,7 +215,7 @@ func (v Value) Mul(l List) Value {
 func (v Value) Div(l List) Value {
 	res := Value{line: v.line}
 	
-	if len(l) == 0 {
+	if len(l) < 2 {
 		return throw("Line %d: Not enough args to '/'", v.line)
 	}
 
@@ -465,7 +465,7 @@ func (v Value) Cond(l List) Value {
 		}
 		c := arg.l[0].Eval()
 		if c.t != TypeBool {
-			return throw("Line %d: 'cond' on non-bool", arg.line)
+			return throw("Line %d: 'cond' on non-bool", arg.l[0].line)
 		}
 
 		if c.b {

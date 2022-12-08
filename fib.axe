@@ -1,0 +1,11 @@
+(= fib (fn (n)
+    (do
+        (cond
+            ((or (== n 0) (== n 1)) n)
+            (true (+ (fib (- n 1)) (fib (- n 2))))))))
+
+(= a 0)
+(while (< a 15)
+    (do
+        (= a (+ a 1))
+        (print (fib a))))
