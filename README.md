@@ -17,6 +17,7 @@ It doesn't have much else.
 # Operations
 - `(fn ([arg:sym ...]) [expr])` Create a new function.  Use `do` for multi-expr
     functions
+- `'[a]` or `(quote [a])` returns `(quote [a])`
 - `(do [a] [b] ...)` Runs a, b, ..., returning the final value
 - `(= [a:sym] [b])` Sets the variable a to b
 - `(+ [a] [b] ...)` Adds all values, left to right
