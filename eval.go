@@ -50,6 +50,7 @@ func (v Value) Eval() Value {
 				"exit" : Value.Exit,
 				"print" : Value.bPrint,
 				"cond" : Value.Cond,
+				"while" : Value.While,
 			}[v.l[0].s]; ok {
 				if len(v.l) == 1 {
 					return b(v, List{})

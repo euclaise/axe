@@ -1,6 +1,5 @@
-(= add2 (fn (a)
+(= a 0)
+(while true
     (do
         (= a (+ a 1))
-        (= a (+ a 1)))))
-
-(print (add2 1))
+        (print a)))

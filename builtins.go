@@ -478,3 +478,22 @@ func (v Value) Do(l List) Value {
 	}
 	return last
 }
+
+func (v Value) While(l List) Value {
+	var last Value
+	if len(l) != 2 {
+		return throw("Line %d: No expression for 'while'", v.line)
+	}
+
+	for {
+		test := l[0].Eval()
+		if test.t != TypeBool {
+			return throw("Line %d: 'while' on non-bool", l[0].line)
+		}
+		if !test.b {
+			break
+		}
+		last = l[1].Eval()
+	}
+	return last
+}
