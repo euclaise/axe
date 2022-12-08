@@ -46,6 +46,11 @@ func GetValue() Value {
 
 	if r == 0 {
 		return v
+	} else if r == '\'' {
+		GetRune()
+		v.t = TypeList
+		v.l = List{Value{t: TypeSym, s: "quote"}}
+		v.l = append(v.l, GetValue())
 	} else if r == '(' {
 		v.t = TypeList
 		v.l = GetList()

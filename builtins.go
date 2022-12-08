@@ -501,11 +501,9 @@ func (v Value) While(l List) Value {
 func (v Value) Quote(l List) Value {
 	if len(l) == 0 {
 		return throw("Line %d: No expression for 'quote'", v.line)
-	} else if len(l) == 1 {
-		return l[0]
 	}
 
-	res := Value{t: TypeList}
+	res := Value{t: TypeList, l: List{Value{t: TypeSym, s: "quote"}}}
 	for _, x := range l {
 		res.l = append(res.l, x)
 	}
