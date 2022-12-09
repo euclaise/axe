@@ -11,36 +11,41 @@ const (
 	TypeSym
 	TypeFn
 	TypeList
+	TypeBlock
+	TypeBuiltin
 )
 
 type Value struct {
 	t int //type
-	
-	i int64
-	f float64
-	b bool
-	s string //string, sym
+
+	i  int64
+	f  float64
+	b  bool
+	s  string //string, sym, builtin
 	fn Fn
-	l List
+	bl *Block
+	l  List
+	n  int
 
 	line int
 }
 
 type List []Value
 
-type Fn struct {
-	args []string
-	expr *Value
-}
-
 func (v Value) Print() {
 	switch v.t {
-	case TypeError: fmt.Print("[error]")
-	case TypeInt: fmt.Printf("%d", v.i)
-	case TypeFloat: fmt.Printf("%f", v.f)
-	case TypeBool: fmt.Printf("%t", v.b)
-	case TypeStr: fmt.Printf("\"%s\"", v.s)
-	case TypeSym: fmt.Printf("%s", v.s)
+	case TypeError:
+		fmt.Print("[error]")
+	case TypeInt:
+		fmt.Printf("%d", v.i)
+	case TypeFloat:
+		fmt.Printf("%f", v.f)
+	case TypeBool:
+		fmt.Printf("%t", v.b)
+	case TypeStr:
+		fmt.Printf("\"%s\"", v.s)
+	case TypeSym:
+		fmt.Printf("%s", v.s)
 	case TypeFn:
 		fmt.Print("[fn (")
 		for i := range v.fn.args {
@@ -66,6 +71,10 @@ func (v Value) Print() {
 			v.l[i].Print()
 		}
 		fmt.Print(")")
+	case TypeBlock:
+		fmt.Print("[block]")
+	case TypeBuiltin:
+		fmt.Print("[builtin]")
 	default:
 		fmt.Println("[nil]")
 	}

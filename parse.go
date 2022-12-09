@@ -2,11 +2,12 @@ package main
 
 import (
 	"io"
-	"unicode"
 	"strconv"
+	"unicode"
 )
 
 const EOF = 0
+
 var line = 1
 
 func PeekRune() rune {
@@ -34,7 +35,7 @@ func GetRune() rune {
 
 func GetValue() Value {
 	v := Value{line: line}
-	
+
 	r := PeekRune()
 	for unicode.IsSpace(r) {
 		GetRune()
@@ -59,7 +60,7 @@ func GetValue() Value {
 		v.s = ""
 		GetRune() // First '"'
 		r = GetRune()
-		for r != '"'{
+		for r != '"' {
 			v.s += string(r)
 			r = GetRune()
 		}
@@ -133,6 +134,14 @@ func GetList() List {
 	}
 	for PeekRune() != ')' {
 		res = append(res, GetValue())
+		r := PeekRune()
+		for unicode.IsSpace(r) {
+			GetRune()
+			if r == '\n' {
+				line++
+			}
+			r = PeekRune()
+		}
 	}
 	GetRune() // ')'
 	return res

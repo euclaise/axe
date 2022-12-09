@@ -1,3 +1,5 @@
+; THIS CODE DOES NOT WORK YET, SEE FIB2
+
 (= fib (fn (n)
     (do
         (cond

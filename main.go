@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
-	"bufio"
 )
 
 var rd *bufio.Reader
@@ -15,21 +15,27 @@ func die(f string, args ...any) {
 	os.Exit(1)
 }
 
-func throw(f string, args ...any) Value {
+func throw(f string, args ...any) {
 	fmt.Printf(f, args...)
 	fmt.Println()
 	if fromfile {
 		os.Exit(1)
 	}
-	return Value{}
 }
 
 func main() {
+	root := Fn{locals: nil}
 	if len(os.Args) == 1 {
 		rd = bufio.NewReader(os.Stdin)
 		for {
+			root.first = &Block{fn: &root}
 			fmt.Print("> ")
-			GetValue().Eval().Print()
+			root.first.Gen(GetValue())
+			//for _, i := range root.first.body {
+			//	i.Print()
+			//}
+			root.first.Run()
+			stack.Top().Print()
 			fmt.Println()
 		}
 	} else if len(os.Args) == 2 {
@@ -42,9 +48,12 @@ func main() {
 		}
 
 		v := Value{t: TypeInt}
+		root.first = &Block{fn: &root}
 		for v.t != TypeError {
-			v = GetValue().Eval()
+			v = GetValue()
+			root.first.Gen(v)
 		}
+		root.first.Run()
 	} else {
 		die("Usage: %s [file]", os.Args[0])
 	}

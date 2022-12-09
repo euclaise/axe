@@ -1,0 +1,2 @@
+Generate a new function instance with each call, to prevent local clobbering
+via nested calls
