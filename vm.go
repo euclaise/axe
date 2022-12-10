@@ -32,6 +32,8 @@ type Block struct {
 	fn   *Fn
 }
 
+
+var btrace = false //trace builtins
 var locals = []map[string]Value{}
 
 type Stack []Value
@@ -109,6 +111,9 @@ func (ins Ins) Run(fn *Fn) bool {
 		} else if callee.t == TypeBlock {
 			callee.bl.Run()
 		} else if callee.t == TypeBuiltin {
+			if btrace {
+				fmt.Printf("Trace: %s\n", callee.s)
+			}
 			v := callee.bu(callee, args)
 			if v != nil && v.t != TypeError {
 				stack.Push(*v)

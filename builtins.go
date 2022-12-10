@@ -21,6 +21,7 @@ var globals = map[string]Value{
 	"print": {t: TypeBuiltin, s: "print", bu: Value.bPrint},
 	"exit": {t: TypeBuiltin, s: "exit", bu: Value.Exit},
 	"dumps!": {t: TypeBuiltin, s: "dumps!", bu: Value.Dumps},
+	"btrace!": {t: TypeBuiltin, s: "btrace!", bu: Value.Btrace},
 }
 
 func (a Value) Eq2(b Value) bool {
@@ -377,6 +378,15 @@ func (callee Value) Dumps(args List) *Value {
 		}
 	} else {
 		throw("'dumps!' takes at most 1 args, not %d", len(args))
+	}
+	return nil
+}
+
+func (callee Value) Btrace(args List) *Value {
+	if len(args) != 0 {
+		throw("'btrace!' takes no args")
+	} else {
+		btrace = !btrace
 	}
 	return nil
 }
