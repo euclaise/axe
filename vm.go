@@ -101,7 +101,7 @@ func (a Value) Eq(b Value) bool {
 	}
 }
 
-func (ins Ins) Run(fn *Fn) {
+func (ins Ins) Run(fn *Fn) bool {
 	switch ins.op {
 	case InsImm:
 		stack.Push(ins.imm)
@@ -117,13 +117,14 @@ func (ins Ins) Run(fn *Fn) {
 		if !ok {
 			throw("Line %d (vm): Could not find variable %s",
 				ins.imm.line, ins.imm.s)
+			return false
 		}
 		stack.Push(val)
 	case InsStoreV:
 		top := stack.Top()
 		if _, ok := globals[ins.imm.s]; ok {
 			globals[ins.imm.s] = top
-			return
+			return false
 		}
 		if len(locals) > 0 {
 			locals[len(locals)-1][ins.imm.s] = top
@@ -134,7 +135,7 @@ func (ins Ins) Run(fn *Fn) {
 		cond := stack.Pop()
 		if cond.t != TypeBool {
 			throw("Line %d: 'if' on non-bool", cond.line)
-			return
+			return false
 		}
 		if cond.b {
 			ins.bt.Run()
@@ -160,8 +161,8 @@ func (ins Ins) Run(fn *Fn) {
 			switch callee.s {
 			case "==":
 				if len(args) < 2 {
-					throw("Line %d: Too few args to '=='", args[1].line)
-					return
+					throw("Line %d: Too few args to '=='", callee.line)
+					return false
 				}
 				res := Value{t: TypeBool, b: true, line: callee.line}
 				for _, val := range args[1:] {
@@ -173,36 +174,36 @@ func (ins Ins) Run(fn *Fn) {
 				stack.Push(res)
 			case "and":
 				if len(args) < 2 {
-					throw("Line %d: Too few args to 'and'", args[1].line)
-					return
+					throw("Line %d: Too few args to 'and'", callee.line)
+					return false
 				}
 				res := Value{t: TypeBool, b: true, line: callee.line}
 				for _, val := range args {
 					if val.t != TypeBool {
 						throw("Line %d: 'and' on non-bool", val.line)
-						return
+						return false
 					}
 					res.b = res.b && val.b
 				}
 				stack.Push(res)
 			case "or":
 				if len(args) < 2 {
-					throw("Line %d: Too few args to 'or'", args[1].line)
-					return
+					throw("Line %d: Too few args to 'or'", callee.line)
+					return false
 				}
 				res := Value{t: TypeBool, b: false, line: callee.line}
 				for _, val := range args {
 					if val.t != TypeBool {
 						throw("Line %d: 'or' on non-bool", val.line)
-						return
+						return false
 					}
 					res.b = res.b || val.b
 				}
 				stack.Push(res)
 			case "<":
 				if len(args) != 2 {
-					throw("Line %d: Wrong number of args to '<'", args[1].line)
-					return
+					throw("Line %d: Wrong number of args to '<'", callee.line)
+					return false
 				}
 				res := Value{t: TypeBool, line: callee.line}
 				switch {
@@ -218,8 +219,8 @@ func (ins Ins) Run(fn *Fn) {
 				stack.Push(res)
 			case "<=":
 				if len(args) != 2 {
-					throw("Line %d: Wrong number of args to '<='", args[1].line)
-					return
+					throw("Line %d: Wrong number of args to '<='", callee.line)
+					return false
 				}
 				res := Value{t: TypeBool, b: false, line: callee.line}
 				switch {
@@ -235,8 +236,8 @@ func (ins Ins) Run(fn *Fn) {
 				stack.Push(res)
 			case ">":
 				if len(args) != 2 {
-					throw("Line %d: Wrong number of args to '>'", args[1].line)
-					return
+					throw("Line %d: Wrong number of args to '>'", callee.line)
+					return false
 				}
 				res := Value{t: TypeBool, b: false, line: callee.line}
 				switch {
@@ -252,8 +253,8 @@ func (ins Ins) Run(fn *Fn) {
 				stack.Push(res)
 			case ">=":
 				if len(args) != 2 {
-					throw("Line %d: Wrong number of args to '>='", args[1].line)
-					return
+					throw("Line %d: Wrong number of args to '>='", callee.line)
+					return false
 				}
 				res := Value{t: TypeBool, b: false, line: callee.line}
 				switch {
@@ -269,8 +270,8 @@ func (ins Ins) Run(fn *Fn) {
 				stack.Push(res)
 			case "+":
 				if len(args) < 2 {
-					throw("Line %d: Too few args to '+'", args[1].line)
-					return
+					throw("Line %d: Too few args to '+'", callee.line)
+					return false
 				}
 				isfloat := false
 				for _, arg := range args {
@@ -300,8 +301,8 @@ func (ins Ins) Run(fn *Fn) {
 				stack.Push(res)
 			case "-":
 				if len(args) < 2 {
-					throw("Line %d: Too few args to '-'", args[1].line)
-					return
+					throw("Line %d: Too few args to '-'", callee.line)
+					return false
 				}
 				isfloat := false
 				for _, arg := range args {
@@ -329,8 +330,8 @@ func (ins Ins) Run(fn *Fn) {
 				stack.Push(res)
 			case "*":
 				if len(args) < 2 {
-					throw("Line %d: Too few args to '*'", args[1].line)
-					return
+					throw("Line %d: Too few args to '*'", callee.line)
+					return false
 				}
 				isfloat := false
 				for _, arg := range args {
@@ -358,8 +359,8 @@ func (ins Ins) Run(fn *Fn) {
 				stack.Push(res)
 			case "/":
 				if len(args) < 2 {
-					throw("Line %d: Too few args to '/'", args[1].line)
-					return
+					throw("Line %d: Too few args to '/'", callee.line)
+					return false
 				}
 				res := args[0]
 				if args[0].t == TypeInt {
@@ -377,7 +378,7 @@ func (ins Ins) Run(fn *Fn) {
 			case "print":
 				if len(args) != 1 {
 					throw("'print' expects 1 args, not %d", len(args))
-					return
+					return false
 				}
 
 				switch args[0].t {
@@ -392,7 +393,7 @@ func (ins Ins) Run(fn *Fn) {
 				case TypeStr:
 					fmt.Printf("%s\n", args[0].s)
 				case TypeSym:
-					fmt.Printf("'%s\n", args[0].s)
+					fmt.Printf("[sym %s]\n", args[0].s)
 				case TypeFn:
 					fmt.Println("[fn]")
 				case TypeList:
@@ -422,7 +423,7 @@ func (ins Ins) Run(fn *Fn) {
 			case "exit":
 				if len(args) > 2 {
 					throw("'exit' takes at most 1 args, not %d", len(args))
-					return
+					return false
 				}
 				if len(args) == 0 {
 					os.Exit(0)
@@ -430,26 +431,30 @@ func (ins Ins) Run(fn *Fn) {
 				if args[0].t != TypeInt {
 					throw("Line %d: Trying to exit with non-int code",
 						args[0].line)
-					return
+					return false
 				}
 				os.Exit(int(args[1].i))
 			default:
 				throw("Line %d: Unknown builtin", callee.line)
-				return
+				return false
 			}
 		} else {
 			callee.Print()
 			fmt.Println()
 			throw("Line %d: Call to non-fn (%d)", callee.line, callee.t)
-			return
+			return false
 		}
 	}
+	return true
 }
 
 func (b Block) Run() {
 	old := stack
 	for _, ins := range b.body {
-		ins.Run(b.fn)
+		if !ins.Run(b.fn) {
+			stack = old
+			return
+		}
 	}
 	old.Push(stack.Top())
 	stack = old

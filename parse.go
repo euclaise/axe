@@ -107,7 +107,9 @@ func GetValue() Value {
 			r = PeekRune()
 		}
 		if v.s == "" {
-			die("Line %d: Unbalanced rparen", line)
+			GetRune()
+			throw("Line %d: Unbalanced rparen", line)
+			return Value{}
 		}
 
 		if v.s == "true" {

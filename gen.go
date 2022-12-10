@@ -25,7 +25,7 @@ func (b *Block) LookupVar(s string) *Value {
 }
 
 
-func (b *Block) Gen(v Value) {
+func (b *Block) Gen(v Value) bool {
 	switch v.t {
 	case TypeInt,
 		TypeFloat,
@@ -46,18 +46,18 @@ func (b *Block) Gen(v Value) {
 			b.body = append(b.body, Ins{op: InsLoadV, imm: v})
 		} else {
 			throw("Line %d: Failed to find variable %s", v.line, v.s)
-			return
+			return false
 		}
 	case TypeList:
 		if len(v.l) == 0 {
 			throw("Line %d: Empty expression", v.line)
-			return
+			return false
 		}
 		switch v.l[0].s {
 		case "quote":
 			if len(v.l) != 2 {
 				throw("'quote' takes 1 args")
-				return
+				return false
 			}
 			b.body = append(b.body, Ins{
 				op: InsImm,
@@ -69,17 +69,17 @@ func (b *Block) Gen(v Value) {
 
 			if len(v.l) != 3 {
 				throw("Line %d: fn takes 2 args, got %d", v.l[0].line, len(v.l))
-				return
+				return false
 			}
 			if v.l[1].t != TypeList {
 				throw("Line %d: Args should be a list", v.l[1].line)
-				return
+				return false
 			}
 
 			for _, arg := range v.l[1].l {
 				if arg.t != TypeSym {
 					throw("Line %d: Args should be symbols", arg.line)
-					return
+					return false
 				}
 				newf.args = append(newf.args, arg.s)
 				newf.locals[arg.s] = Value{}
@@ -98,7 +98,7 @@ func (b *Block) Gen(v Value) {
 			if len(v.l) != 4 {
 				throw("Line %d: macro takes 2 args, got %d",
 						v.l[0].line, len(v.l))
-				return
+				return false
 			}
 			if v.l[1].t != TypeSym {
 				throw("Line %d: Macro name must be a sym", v.l[1].line)
@@ -106,13 +106,13 @@ func (b *Block) Gen(v Value) {
 
 			if v.l[2].t != TypeList {
 				throw("Line %d: Args should be a list", v.l[1].line)
-				return
+				return false
 			}
 
 			for _, arg := range v.l[2].l {
 				if arg.t != TypeSym {
 					throw("Line %d: Args should be symbols", arg.line)
-					return
+					return false
 				}
 				newf.args = append(newf.args, arg.s)
 				newf.locals[arg.s] = Value{}
@@ -158,7 +158,7 @@ func (b *Block) Gen(v Value) {
 			if len(v.l) != 4 {
 				throw("Line %d: if takes 3 args (cond, true, false), got %d",
 					v.l[0].line, len(v.l))
-				return
+				return false
 			}
 
 			b.Gen(v.l[1])
@@ -170,7 +170,7 @@ func (b *Block) Gen(v Value) {
 			if len(v.l) < 2 {
 				throw("Line %d: cond requires at least one condition",
 					v.l[0].line)
-				return
+				return false
 			}
 
 			cur := b
@@ -181,7 +181,7 @@ func (b *Block) Gen(v Value) {
 				if arg.t != TypeList || len(arg.l) != 2 {
 					throw("Line %d: Conditions should be of (cond expr) format",
 						arg.line)
-					return
+					return false
 				}
 
 				cur.Gen(arg.l[0])
@@ -195,7 +195,7 @@ func (b *Block) Gen(v Value) {
 			// (= $var $expr)
 			if len(v.l) != 3 {
 				throw("Line %d: Wrong arg count for '='", v.line)
-				return
+				return false
 			}
 			b.SetVar(v.l[1].s, Value{})
 
@@ -239,4 +239,5 @@ func (b *Block) Gen(v Value) {
 			})
 		}
 	}
+	return true
 }
