@@ -54,6 +54,15 @@ func (b *Block) Gen(v Value) {
 			return
 		}
 		switch v.l[0].s {
+		case "quote":
+			if len(v.l) != 2 {
+				throw("'quote' takes 1 args")
+				return
+			}
+			b.body = append(b.body, Ins{
+				op: InsImm,
+				imm: v,
+			})
 		case "fn":
 			// (fn (&a &b &...) $expr)
 			newf := Fn{locals: map[string]Value{}}
@@ -205,7 +214,16 @@ func (b *Block) Gen(v Value) {
 				for i := len(v.l) - 1; i > 0; i-- { // >= to pass callee
 					b.body = append(b.body, Ins{
 						op: InsImm,
-						imm: v.l[i],
+						imm: Value{
+							t: TypeList,
+							l: List{
+								Value{
+									t: TypeSym,
+									s: "quote",
+								},
+								v.l[i],
+							},
+						},
 					})
 					b.Gen(v.l[0])
 				}
