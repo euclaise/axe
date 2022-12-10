@@ -27,8 +27,7 @@ func (b *Block) LookupVar(s string) *Value {
 
 func (b *Block) Gen(v Value) bool {
 	switch v.t {
-	case TypeInt,
-		TypeFloat,
+	case TypeFloat,
 		TypeBool,
 		TypeStr:
 		b.body = append(b.body, Ins{op: InsImm, imm: v})

@@ -105,11 +105,9 @@ func GetValue() Value {
 				tmp += string(r)
 				r = PeekRune()
 			}
-			v.f, _ = strconv.ParseFloat(tmp, 64)
-		} else {
-			v.t = TypeInt
-			v.i, _ = strconv.ParseInt(tmp, 10, 64)
 		}
+		v.t = TypeFloat
+		v.f, _ = strconv.ParseFloat(tmp, 64)
 	} else {
 		v.t = TypeSym
 		v.s = ""

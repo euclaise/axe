@@ -48,7 +48,7 @@ func main() {
 				os.Args[1], os.Args[0])
 		}
 
-		v := Value{t: TypeInt}
+		v := Value{t: TypeFloat}
 		root.first = &Block{fn: &root}
 		for v.t != TypeError {
 			v = GetValue()

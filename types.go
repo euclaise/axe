@@ -5,7 +5,6 @@ import "fmt"
 const (
 	TypeDummy = iota
 	TypeError
-	TypeInt
 	TypeFloat
 	TypeBool
 	TypeStr
@@ -19,7 +18,6 @@ const (
 type Value struct {
 	t int //type
 
-	i  int64
 	f  float64
 	b  bool
 	s  string //string, sym, builtin
@@ -38,8 +36,6 @@ func (v Value) Print() {
 	switch v.t {
 	case TypeError:
 		fmt.Print("[error]")
-	case TypeInt:
-		fmt.Printf("%d", v.i)
 	case TypeFloat:
 		fmt.Printf("%f", v.f)
 	case TypeBool:

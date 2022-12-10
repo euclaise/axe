@@ -29,8 +29,6 @@ func (a Value) Eq2(b Value) bool {
 		return false
 	}
 	switch b.t {
-	case TypeInt:
-		return b.i == a.i
 	case TypeFloat:
 		return b.f == a.f
 	case TypeBool:
@@ -115,16 +113,7 @@ func (callee Value) Lt(args List) *Value {
 		return nil
 	}
 	res := Value{t: TypeBool, line: callee.line}
-	switch {
-	case args[0].t == TypeInt && args[1].t == TypeInt:
-		res.b = args[0].i < args[1].i
-	case args[0].t == TypeInt && args[1].t == TypeFloat:
-		res.b = float64(args[0].i) < args[1].f
-	case args[0].t == TypeFloat && args[1].t == TypeInt:
-		res.b = args[0].f < float64(args[1].i)
-	case args[0].t == TypeFloat && args[1].t == TypeFloat:
-		res.b = args[0].f < args[1].f
-	}
+	res.b = args[0].f < args[1].f
 	return &res
 }
 
@@ -134,16 +123,7 @@ func (callee Value) Le(args List) *Value {
 		return nil
 	}
 	res := Value{t: TypeBool, b: false, line: callee.line}
-	switch {
-	case args[0].t == TypeInt && args[1].t == TypeInt:
-		res.b = args[0].i <= args[1].i
-	case args[0].t == TypeInt && args[1].t == TypeFloat:
-		res.b = float64(args[0].i) <= args[1].f
-	case args[0].t == TypeFloat && args[1].t == TypeInt:
-		res.b = args[0].f <= float64(args[1].i)
-	case args[0].t == TypeFloat && args[1].t == TypeFloat:
-		res.b = args[0].f <= args[1].f
-	}
+	res.b = args[0].f <= args[1].f
 	return &res
 }
 
@@ -153,16 +133,7 @@ func (callee Value) Gt(args List) *Value {
 		return nil
 	}
 	res := Value{t: TypeBool, b: false, line: callee.line}
-	switch {
-	case args[0].t == TypeInt && args[1].t == TypeInt:
-		res.b = args[0].i > args[1].i
-	case args[0].t == TypeInt && args[1].t == TypeFloat:
-		res.b = float64(args[0].i) > args[1].f
-	case args[0].t == TypeFloat && args[1].t == TypeInt:
-		res.b = args[0].f > float64(args[1].i)
-	case args[0].t == TypeFloat && args[1].t == TypeFloat:
-		res.b = args[0].f > args[1].f
-	}
+	res.b = args[0].f > args[1].f
 	return &res
 }
 
@@ -172,16 +143,7 @@ func (callee Value) Ge(args List) *Value {
 		return nil
 	}
 	res := Value{t: TypeBool, b: false, line: callee.line}
-	switch {
-	case args[0].t == TypeInt && args[1].t == TypeInt:
-		res.b = args[0].i >= args[1].i
-	case args[0].t == TypeInt && args[1].t == TypeFloat:
-		res.b = float64(args[0].i) >= args[1].f
-	case args[0].t == TypeFloat && args[1].t == TypeInt:
-		res.b = args[0].f >= float64(args[1].i)
-	case args[0].t == TypeFloat && args[1].t == TypeFloat:
-		res.b = args[0].f >= args[1].f
-	}
+	res.b = args[0].f >= args[1].f
 	return &res
 }
 
@@ -190,30 +152,17 @@ func (callee Value) Add(args List) *Value {
 		throw("Line %d: Too few args to '+'", callee.line)
 		return nil
 	}
-	isfloat := false
-	for _, arg := range args {
-		if arg.t == TypeFloat {
-			isfloat = true
-		}
+	if args[0].t != TypeFloat {
+		throw("Line %d: '+' only takes numeric args", args[0].line)
+		return nil
 	}
-	res := Value{line: callee.line}
-	if isfloat {
-		if args[0].t == TypeInt {
-			res.f = float64(args[0].i)
+	res := args[0]
+	for _, arg := range args[1:] {
+		if arg.t != TypeFloat {
+			throw("Line %d: '+' only takes numeric args", arg.line)
+			return nil
 		}
-		res.t = TypeFloat
-		for _, arg := range args {
-			if arg.t == TypeFloat {
-				res.f += arg.f
-			} else {
-				res.f += float64(arg.i)
-			}
-		}
-	} else {
-		res.t = TypeInt
-		for _, arg := range args {
-			res.i += arg.i
-		}
+		res.f += arg.f
 	}
 	return &res
 }
@@ -223,28 +172,17 @@ func (callee Value) Sub(args List) *Value {
 		throw("Line %d: Too few args to '-'", callee.line)
 		return nil
 	}
-	isfloat := false
-	for _, arg := range args {
-		if arg.t == TypeFloat {
-			isfloat = true
-		}
+	if args[0].t != TypeFloat {
+		throw("Line %d: '+' only takes numeric args", args[0].line)
+		return nil
 	}
 	res := args[0]
-	if isfloat {
-		if args[0].t == TypeInt {
-			res.f = float64(args[0].i)
+	for _, arg := range args[1:] {
+		if arg.t != TypeFloat {
+			throw("Line %d: '-' only takes numeric args", arg.line)
+			return nil
 		}
-		for _, arg := range args[1:] {
-			if arg.t == TypeFloat {
-				res.f -= arg.f
-			} else {
-				res.f -= float64(arg.i)
-			}
-		}
-	} else {
-		for _, arg := range args[1:] {
-			res.i -= arg.i
-		}
+		res.f -= arg.f
 	}
 	return &res
 }
@@ -254,28 +192,13 @@ func (callee Value) Mul(args List) *Value {
 		throw("Line %d: Too few args to '*'", callee.line)
 		return nil
 	}
-	isfloat := false
-	for _, arg := range args {
-		if arg.t == TypeFloat {
-			isfloat = true
-		}
-	}
 	res := args[0]
-	if isfloat {
-		if args[0].t == TypeInt {
-			res.f = float64(args[0].i)
+	for _, arg := range args[1:] {
+		if arg.t != TypeFloat {
+			throw("Line %d: '*' only takes numeric args", arg.line)
+			return nil
 		}
-		for _, arg := range args[1:] {
-			if arg.t == TypeFloat {
-				res.f *= arg.f
-			} else {
-				res.f *= float64(arg.i)
-			}
-		}
-	} else {
-		for _, arg := range args[1:] {
-			res.i *= arg.i
-		}
+		res.f *= arg.f
 	}
 	return &res
 }
@@ -286,16 +209,13 @@ func (callee Value) Div(args List) *Value {
 		return nil
 	}
 	res := args[0]
-	if args[0].t == TypeInt {
-		res.f = float64(args[0].i)
-	}
 	res.t = TypeFloat
-	for _, arg := range args[1:] {
-		if arg.t == TypeFloat {
-			res.f /= arg.f
-		} else {
-			res.f /= float64(arg.i)
+	for _, arg := range args {
+		if arg.t != TypeFloat {
+			throw("Line %d: '/' only takes numeric args", arg.line)
+			return nil
 		}
+		res.f /= arg.f
 	}
 	return &res
 }
@@ -309,8 +229,6 @@ func (callee Value) bPrint(args List) *Value {
 	switch args[0].t {
 	case TypeError:
 		fmt.Println("[error]")
-	case TypeInt:
-		fmt.Printf("%d\n", args[0].i)
 	case TypeFloat:
 		fmt.Printf("%f\n", args[0].f)
 	case TypeBool:
@@ -355,12 +273,12 @@ func (callee Value) Exit(args List) *Value {
 	if len(args) == 0 {
 		os.Exit(0)
 	}
-	if args[0].t != TypeInt {
-		throw("Line %d: Trying to exit with non-int code",
+	if args[0].t != TypeFloat {
+		throw("Line %d: Trying to exit with non-numeric code",
 			args[0].line)
 		return nil
 	}
-	os.Exit(int(args[1].i))
+	os.Exit(int(args[1].f))
 	return nil
 }
 
@@ -372,7 +290,7 @@ func (callee Value) Dumps(args List) *Value {
 			fmt.Println()
 		}
 	} else if len(args) == 1 {
-		n := len(stack) - int(args[0].i)
+		n := len(stack) - int(args[0].f)
 		for i := len(stack) - 1; i >= n; i++ {
 			stack[i].Print()
 		}
