@@ -22,6 +22,8 @@ var globals = map[string]Value{
 	"exit": {t: TypeBuiltin, s: "exit", bu: Value.Exit},
 	"dumps!": {t: TypeBuiltin, s: "dumps!", bu: Value.Dumps},
 	"btrace!": {t: TypeBuiltin, s: "btrace!", bu: Value.Btrace},
+	"strace!": {t: TypeBuiltin, s: "strace!", bu: Value.Strace},
+	"itrace!": {t: TypeBuiltin, s: "itrace!", bu: Value.Itrace},
 }
 
 func (a Value) Eq2(b Value) bool {
@@ -48,7 +50,7 @@ func (a Value) Eq2(b Value) bool {
 		}
 		return true
 	default:
-		throw("Line %d: ==, unhandled type (%d)",
+		throw("Line %d: '==' - unhandled type (%d)",
 			b.line, b.t)
 		return false
 	}
@@ -113,6 +115,10 @@ func (callee Value) Lt(args List) *Value {
 		return nil
 	}
 	res := Value{t: TypeBool, line: callee.line}
+	if args[0].t != TypeFloat || args[1].t != TypeFloat {
+		throw("Line %d: '<' only takes numeric args", args[1].line)
+		return nil
+	}
 	res.b = args[0].f < args[1].f
 	return &res
 }
@@ -120,6 +126,10 @@ func (callee Value) Lt(args List) *Value {
 func (callee Value) Le(args List) *Value {
 	if len(args) != 2 {
 		throw("Line %d: Wrong number of args to '<='", callee.line)
+		return nil
+	}
+	if args[0].t != TypeFloat || args[1].t != TypeFloat {
+		throw("Line %d: '<=' only takes numeric args", args[1].line)
 		return nil
 	}
 	res := Value{t: TypeBool, b: false, line: callee.line}
@@ -132,6 +142,10 @@ func (callee Value) Gt(args List) *Value {
 		throw("Line %d: Wrong number of args to '>'", callee.line)
 		return nil
 	}
+	if args[0].t != TypeFloat || args[1].t != TypeFloat {
+		throw("Line %d: '>' only takes numeric args", args[1].line)
+		return nil
+	}
 	res := Value{t: TypeBool, b: false, line: callee.line}
 	res.b = args[0].f > args[1].f
 	return &res
@@ -140,6 +154,10 @@ func (callee Value) Gt(args List) *Value {
 func (callee Value) Ge(args List) *Value {
 	if len(args) != 2 {
 		throw("Line %d: Wrong number of args to '>='", callee.line)
+		return nil
+	}
+	if args[0].t != TypeFloat || args[1].t != TypeFloat {
+		throw("Line %d: '>=' only takes numeric args", args[1].line)
 		return nil
 	}
 	res := Value{t: TypeBool, b: false, line: callee.line}
@@ -173,7 +191,7 @@ func (callee Value) Sub(args List) *Value {
 		return nil
 	}
 	if args[0].t != TypeFloat {
-		throw("Line %d: '+' only takes numeric args", args[0].line)
+		throw("Line %d: '-' only takes numeric args", args[0].line)
 		return nil
 	}
 	res := args[0]
@@ -193,6 +211,10 @@ func (callee Value) Mul(args List) *Value {
 		return nil
 	}
 	res := args[0]
+	if args[0].t != TypeFloat {
+		throw("Line %d: '*' only takes numeric args", args[0].line)
+		return nil
+	}
 	for _, arg := range args[1:] {
 		if arg.t != TypeFloat {
 			throw("Line %d: '*' only takes numeric args", arg.line)
@@ -209,7 +231,10 @@ func (callee Value) Div(args List) *Value {
 		return nil
 	}
 	res := args[0]
-	res.t = TypeFloat
+	if args[0].t != TypeFloat {
+		throw("Line %d: '/' only takes numeric args", args[0].line)
+		return nil
+	}
 	for _, arg := range args {
 		if arg.t != TypeFloat {
 			throw("Line %d: '/' only takes numeric args", arg.line)
@@ -305,6 +330,24 @@ func (callee Value) Btrace(args List) *Value {
 		throw("'btrace!' takes no args")
 	} else {
 		btrace = !btrace
+	}
+	return nil
+}
+
+func (callee Value) Itrace(args List) *Value {
+	if len(args) != 0 {
+		throw("'itrace!' takes no args")
+	} else {
+		itrace = !itrace
+	}
+	return nil
+}
+
+func (callee Value) Strace(args List) *Value {
+	if len(args) != 0 {
+		throw("'strace!' takes no args")
+	} else {
+		strace = !strace
 	}
 	return nil
 }

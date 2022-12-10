@@ -31,13 +31,7 @@ func main() {
 			root.first = &Block{fn: &root}
 			fmt.Print("> ")
 			root.first.Gen(GetValue())
-			//for _, i := range root.first.body {
-			//	i.Print()
-			//}
 			root.first.Run()
-			fmt.Print("::: ")
-			stack.Top().Print()
-			fmt.Println()
 		}
 	} else if len(os.Args) == 2 {
 		fromfile = true
@@ -48,9 +42,9 @@ func main() {
 				os.Args[1], os.Args[0])
 		}
 
-		v := Value{t: TypeFloat}
+		v := Value{t: TypeSym}
 		root.first = &Block{fn: &root}
-		for v.t != TypeError {
+		for v.t != TypeDummy {
 			v = GetValue()
 			root.first.Gen(v)
 		}

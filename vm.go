@@ -32,8 +32,10 @@ type Block struct {
 	fn   *Fn
 }
 
+var btrace = false // trace builtins
+var itrace = false // trace instructions
+var strace = false // trace top of stack
 
-var btrace = false //trace builtins
 var locals = []map[string]Value{}
 
 type Stack []Value
@@ -47,7 +49,7 @@ func (s *Stack) Pop() Value {
 }
 
 func (s Stack) Top() Value {
-	return s[len(s)-1]
+	return s[len(s) - 1]
 }
 
 func (s *Stack) Push(v Value) {
@@ -75,10 +77,6 @@ func (ins Ins) Run(fn *Fn) bool {
 		stack.Push(val)
 	case InsStoreV:
 		top := stack.Top()
-		if _, ok := globals[ins.imm.s]; ok {
-			globals[ins.imm.s] = top
-			return false
-		}
 		if len(locals) > 0 {
 			locals[len(locals)-1][ins.imm.s] = top
 		} else {
@@ -112,7 +110,7 @@ func (ins Ins) Run(fn *Fn) bool {
 			callee.bl.Run()
 		} else if callee.t == TypeBuiltin {
 			if btrace {
-				fmt.Printf("Trace: %s\n", callee.s)
+				fmt.Printf(">>> btrace: %s\n", callee.s)
 			}
 			v := callee.bu(callee, args)
 			if v != nil && v.t != TypeError {
@@ -121,9 +119,10 @@ func (ins Ins) Run(fn *Fn) bool {
 				return false
 			}
 		} else {
+			throw("Line %d: Call to non-fn (%d)", callee.line, callee.t)
+			fmt.Print("Value: ")
 			callee.Print()
 			fmt.Println()
-			throw("Line %d: Call to non-fn (%d)", callee.line, callee.t)
 			return false
 		}
 	}
@@ -133,9 +132,16 @@ func (ins Ins) Run(fn *Fn) bool {
 func (b Block) Run() {
 	old := stack
 	for _, ins := range b.body {
-		if !ins.Run(b.fn) {
-			stack = old
-			return
+		if itrace {
+			fmt.Print(">>> itrace: ")
+			ins.Print()
+			fmt.Println()
+		}
+		ins.Run(b.fn)
+		if strace {
+			fmt.Print(">>> strace: ")
+			stack.Top().Print()
+			fmt.Println()
 		}
 	}
 	old.Push(stack.Top())

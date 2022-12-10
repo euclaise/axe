@@ -93,7 +93,9 @@ func GetValue() Value {
 				v.s += string(r)
 				r = PeekRune()
 			}
-		} else if r == '.' {
+			return v
+		} 
+		if r == '.' {
 			v.t = TypeFloat
 			GetRune()
 			tmp = tmp + string(r)
