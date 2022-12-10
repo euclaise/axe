@@ -35,6 +35,7 @@ func main() {
 			//	i.Print()
 			//}
 			root.first.Run()
+			fmt.Print("::: ")
 			stack.Top().Print()
 			fmt.Println()
 		}

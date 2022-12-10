@@ -44,9 +44,10 @@ func SkipWS() rune {
 	}
 	if r == ';' {
 		for r != '\n' {
-			r = GetRune()
+			GetRune()
 		}
-		r = SkipWS()
+		line++
+		SkipWS()
 	}
 	return r
 }
@@ -54,8 +55,7 @@ func SkipWS() rune {
 func GetValue() Value {
 	v := Value{line: line}
 
-	r := PeekRune()
-	SkipWS()
+	r := SkipWS()
 
 	if r == 0 {
 		return v

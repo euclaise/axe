@@ -3,7 +3,8 @@ package main
 import "fmt"
 
 const (
-	TypeError = iota
+	TypeDummy = iota
+	TypeError
 	TypeInt
 	TypeFloat
 	TypeBool
@@ -26,6 +27,7 @@ type Value struct {
 	bl *Block
 	l  List
 	n  int
+	bu func(Value, List) *Value
 
 	line int
 }
