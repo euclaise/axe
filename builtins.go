@@ -59,7 +59,7 @@ func (a Value) Eq2(b Value) bool {
 func (callee Value) Eq(args List) *Value {
 	if len(args) < 2 {
 		throw("Line %d: Too few args to '=='", callee.line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	res := Value{t: TypeBool, b: true, line: callee.line}
 	for _, val := range args[1:] {
@@ -80,13 +80,13 @@ func (callee Value) Ne(args List) *Value {
 func (callee Value) And(args List) *Value {
 	if len(args) < 2 {
 		throw("Line %d: Too few args to 'and'", callee.line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	res := Value{t: TypeBool, b: true, line: callee.line}
 	for _, val := range args {
 		if val.t != TypeBool {
 			throw("Line %d: 'and' on non-bool", val.line)
-			return nil
+			return &Value{t: TypeError}
 		}
 		res.b = res.b && val.b
 	}
@@ -96,13 +96,13 @@ func (callee Value) And(args List) *Value {
 func (callee Value) Or(args List) *Value {
 	if len(args) < 2 {
 		throw("Line %d: Too few args to 'or'", callee.line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	res := Value{t: TypeBool, b: false, line: callee.line}
 	for _, val := range args {
 		if val.t != TypeBool {
 			throw("Line %d: 'or' on non-bool", val.line)
-			return nil
+			return &Value{t: TypeError}
 		}
 		res.b = res.b || val.b
 	}
@@ -112,12 +112,12 @@ func (callee Value) Or(args List) *Value {
 func (callee Value) Lt(args List) *Value { 
 	if len(args) != 2 {
 		throw("Line %d: Wrong number of args to '<'", callee.line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	res := Value{t: TypeBool, line: callee.line}
 	if args[0].t != TypeFloat || args[1].t != TypeFloat {
 		throw("Line %d: '<' only takes numeric args", args[1].line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	res.b = args[0].f < args[1].f
 	return &res
@@ -126,11 +126,11 @@ func (callee Value) Lt(args List) *Value {
 func (callee Value) Le(args List) *Value {
 	if len(args) != 2 {
 		throw("Line %d: Wrong number of args to '<='", callee.line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	if args[0].t != TypeFloat || args[1].t != TypeFloat {
 		throw("Line %d: '<=' only takes numeric args", args[1].line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	res := Value{t: TypeBool, b: false, line: callee.line}
 	res.b = args[0].f <= args[1].f
@@ -140,11 +140,11 @@ func (callee Value) Le(args List) *Value {
 func (callee Value) Gt(args List) *Value {
 	if len(args) != 2 {
 		throw("Line %d: Wrong number of args to '>'", callee.line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	if args[0].t != TypeFloat || args[1].t != TypeFloat {
 		throw("Line %d: '>' only takes numeric args", args[1].line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	res := Value{t: TypeBool, b: false, line: callee.line}
 	res.b = args[0].f > args[1].f
@@ -154,11 +154,11 @@ func (callee Value) Gt(args List) *Value {
 func (callee Value) Ge(args List) *Value {
 	if len(args) != 2 {
 		throw("Line %d: Wrong number of args to '>='", callee.line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	if args[0].t != TypeFloat || args[1].t != TypeFloat {
 		throw("Line %d: '>=' only takes numeric args", args[1].line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	res := Value{t: TypeBool, b: false, line: callee.line}
 	res.b = args[0].f >= args[1].f
@@ -168,17 +168,17 @@ func (callee Value) Ge(args List) *Value {
 func (callee Value) Add(args List) *Value {
 	if len(args) < 2 {
 		throw("Line %d: Too few args to '+'", callee.line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	if args[0].t != TypeFloat {
 		throw("Line %d: '+' only takes numeric args", args[0].line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	res := args[0]
 	for _, arg := range args[1:] {
 		if arg.t != TypeFloat {
 			throw("Line %d: '+' only takes numeric args", arg.line)
-			return nil
+			return &Value{t: TypeError}
 		}
 		res.f += arg.f
 	}
@@ -188,17 +188,17 @@ func (callee Value) Add(args List) *Value {
 func (callee Value) Sub(args List) *Value {
 	if len(args) < 2 {
 		throw("Line %d: Too few args to '-'", callee.line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	if args[0].t != TypeFloat {
 		throw("Line %d: '-' only takes numeric args", args[0].line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	res := args[0]
 	for _, arg := range args[1:] {
 		if arg.t != TypeFloat {
 			throw("Line %d: '-' only takes numeric args", arg.line)
-			return nil
+			return &Value{t: TypeError}
 		}
 		res.f -= arg.f
 	}
@@ -208,17 +208,17 @@ func (callee Value) Sub(args List) *Value {
 func (callee Value) Mul(args List) *Value {
 	if len(args) < 2 {
 		throw("Line %d: Too few args to '*'", callee.line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	res := args[0]
 	if args[0].t != TypeFloat {
 		throw("Line %d: '*' only takes numeric args", args[0].line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	for _, arg := range args[1:] {
 		if arg.t != TypeFloat {
 			throw("Line %d: '*' only takes numeric args", arg.line)
-			return nil
+			return &Value{t: TypeError}
 		}
 		res.f *= arg.f
 	}
@@ -228,17 +228,17 @@ func (callee Value) Mul(args List) *Value {
 func (callee Value) Div(args List) *Value {
 	if len(args) < 2 {
 		throw("Line %d: Too few args to '/'", callee.line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	res := args[0]
 	if args[0].t != TypeFloat {
 		throw("Line %d: '/' only takes numeric args", args[0].line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	for _, arg := range args {
 		if arg.t != TypeFloat {
 			throw("Line %d: '/' only takes numeric args", arg.line)
-			return nil
+			return &Value{t: TypeError}
 		}
 		res.f /= arg.f
 	}
@@ -248,7 +248,7 @@ func (callee Value) Div(args List) *Value {
 func (callee Value) bPrint(args List) *Value {
 	if len(args) != 1 {
 		throw("'print' expects 1 args, not %d", len(args))
-		return nil
+		return &Value{t: TypeError}
 	}
 
 	switch args[0].t {
@@ -291,17 +291,17 @@ func (callee Value) bPrint(args List) *Value {
 }
 
 func (callee Value) Exit(args List) *Value {
-	if len(args) > 2 {
-		throw("'exit' takes at most 1 args, not %d", len(args))
-		return nil
-	}
 	if len(args) == 0 {
 		os.Exit(0)
+	}
+	if len(args) > 2 {
+		throw("'exit' takes at most 1 args, not %d", len(args))
+		return &Value{t: TypeError}
 	}
 	if args[0].t != TypeFloat {
 		throw("Line %d: Trying to exit with non-numeric code",
 			args[0].line)
-		return nil
+		return &Value{t: TypeError}
 	}
 	os.Exit(int(args[1].f))
 	return nil
@@ -321,6 +321,7 @@ func (callee Value) Dumps(args List) *Value {
 		}
 	} else {
 		throw("'dumps!' takes at most 1 args, not %d", len(args))
+		return &Value{t: TypeError}
 	}
 	return nil
 }
@@ -328,6 +329,7 @@ func (callee Value) Dumps(args List) *Value {
 func (callee Value) Btrace(args List) *Value {
 	if len(args) != 0 {
 		throw("'btrace!' takes no args")
+		return &Value{t: TypeError}
 	} else {
 		btrace = !btrace
 	}
@@ -337,6 +339,7 @@ func (callee Value) Btrace(args List) *Value {
 func (callee Value) Itrace(args List) *Value {
 	if len(args) != 0 {
 		throw("'itrace!' takes no args")
+		return &Value{t: TypeError}
 	} else {
 		itrace = !itrace
 	}

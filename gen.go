@@ -188,6 +188,10 @@ func (b *Block) Gen(v Value) bool {
 				cur.body = append(cur.body, Ins{op: InsIf, bt: bt, bf: bf})
 				cur = bf
 			}
+			cur.body = append(cur.body, Ins{
+				op: InsImm,
+				imm: Value{t: TypeError},
+			})
 
 		// First add args (backwards), then callee, then call instruction
 		case "=":
