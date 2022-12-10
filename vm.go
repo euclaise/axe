@@ -39,8 +39,8 @@ type Stack []Value
 var stack = Stack{Value{}}
 
 func (s *Stack) Pop() Value {
-	res := (*s)[len(*s)-1]
-	*s = (*s)[:len(*s)-1]
+	res := (*s)[len(*s) - 1]
+	*s = (*s)[:len(*s) - 1]
 	return res
 }
 

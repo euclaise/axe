@@ -380,23 +380,3 @@ func (callee Value) Dumps(args List) *Value {
 	}
 	return nil
 }
-
-func (callee Value) Pops(args List) *Value {
-	if len(args) != 1 {
-		throw("'pops!' takes 1 args, not %d", len(args))
-		return nil
-	}
-	if args[1].t != TypeInt {
-		throw("Type mismatch")
-		return nil
-	}
-	if int(args[1].i) > len(stack) - 1 {
-		throw("Not enough items on stack to pop %d items", args[1].i)
-		return nil
-	}
-	for i := 0; i < int(args[0].i); i++ {
-		stack.Pop()
-	}
-	return nil
-}
-
