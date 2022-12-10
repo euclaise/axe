@@ -33,9 +33,7 @@ func GetRune() rune {
 	return r
 }
 
-func GetValue() Value {
-	v := Value{line: line}
-
+func SkipWS() rune {
 	r := PeekRune()
 	for unicode.IsSpace(r) {
 		GetRune()
@@ -44,6 +42,20 @@ func GetValue() Value {
 		}
 		r = PeekRune()
 	}
+	if r == ';' {
+		for r != '\n' {
+			r = GetRune()
+		}
+		r = SkipWS()
+	}
+	return r
+}
+
+func GetValue() Value {
+	v := Value{line: line}
+
+	r := PeekRune()
+	SkipWS()
 
 	if r == 0 {
 		return v
@@ -101,7 +113,7 @@ func GetValue() Value {
 	} else {
 		v.t = TypeSym
 		v.s = ""
-		for !unicode.IsSpace(r) && r != ')' {
+		for !unicode.IsSpace(r) && r != ')' && r != ';' {
 			GetRune()
 			v.s += string(r)
 			r = PeekRune()
@@ -136,14 +148,7 @@ func GetList() List {
 	}
 	for PeekRune() != ')' {
 		res = append(res, GetValue())
-		r := PeekRune()
-		for unicode.IsSpace(r) {
-			GetRune()
-			if r == '\n' {
-				line++
-			}
-			r = PeekRune()
-		}
+		SkipWS()
 	}
 	GetRune() // ')'
 	return res
