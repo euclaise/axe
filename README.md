@@ -1,5 +1,5 @@
 Axe is a basic Lisp-like language interpreter that I wrote in a few
-~~hours~~ days.
+ h̶o̶u̶r̶s̶ days.
 
 Unlike lisp, it is based on vectors rather than linked lists.
 If the interpreter were well optimized, this almost certainly improves
@@ -35,7 +35,8 @@ It supports floats, bools, strings, symols, and functions.
 - `(or $expr1 $expr2 ...)` Returns true if any of $expr1, $expr2, ... are true
 - `(and $expr1 $expr2 ...)` Returns true if any of $expr1, $expr2, ... are false
 - `(not $expr)` Inverts $expr
-- `(exit $int)` Exits with error code $int, or 0 if not present
+- `(exit $num)` Exits with error code $num (rounded to the nearest int),
+    or 0 if not present
 - `(print $expr)` Prints expr
 - `(cond ($cond1 $expr1) ($cond2 $expr2) &...)` Runs each test until one is
     true true, returning the matching expr if so.  Returns error if none match
@@ -43,9 +44,18 @@ It supports floats, bools, strings, symols, and functions.
 
 # Example:
 ```
+(= fib (fn (n)
+    (cond
+        ((== n 0) 0)
+        ((== n 1) 1)
+        (true (+ (fib (- n 1)) (fib (- n 2)))))))
 (= a 0)
-(while (< a 10)
-    (do
-        (= a (+ a 1))
-        (print a)))
+(= z (mu (if (< a 25)
+        (do
+            (= a (+ a 1))
+            (print (fib a))
+            (z))
+        (print "done"))))
+
+(z)
 ```
