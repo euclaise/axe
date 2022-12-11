@@ -12,8 +12,6 @@ const (
 	TypeBool
 	TypeStr
 	TypeSym
-	TypeStream
-	TypeWriter
 	TypeFn
 	TypeList
 	TypeBlock
@@ -100,18 +98,6 @@ func (v Value) Builtin() func(Value, List) *Value {
 	return v.bu
 }
 
-func (v Value) Stream() Stream {
-	if v.t != TypeStream {
-		throw("%s line %d: Type mismatch, Expected stream", v.file, v.line)
-	}
-	return v.st
-}
-func (v Value) Writer() io.WriteCloser {
-	if v.t != TypeWriter {
-		throw("%s line %d: Type mismatch, Expected writer", v.file, v.line)
-	}
-	return v.wr
-}
 
 func (v Value) Print() {
 	switch v.t {
@@ -135,14 +121,7 @@ func (v Value) Print() {
 		}
 		fmt.Print(")]")
 	case TypeList:
-		if len(v.l) == 2 {
-			if v.l[0].t == TypeSym && v.l[0].s == "quote" {
-				fmt.Print("'")
-				v.l[1].Print()
-				return
-			}
-		}
-		fmt.Print("(")
+		fmt.Print("'(")
 		for i := range v.l {
 			if i != 0 {
 				fmt.Print(" ")
@@ -154,8 +133,6 @@ func (v Value) Print() {
 		fmt.Print("[block]")
 	case TypeBuiltin:
 		fmt.Print("[builtin]")
-	case TypeStream:
-		fmt.Printf("[stream]\n")
 	default:
 		fmt.Println("[nil]")
 	}

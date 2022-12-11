@@ -60,7 +60,7 @@ func (b *Block) Gen(v Value) bool {
 			}
 			b.body = append(b.body, Ins{
 				op: InsImm,
-				imm: v,
+				imm: v.l[1],
 			})
 		case "fn":
 			// (fn (&a &b &...) $expr)

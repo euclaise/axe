@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"io"
+	"strings"
 )
 
 var globals = map[string]Value{
@@ -25,13 +25,13 @@ var globals = map[string]Value{
 	"btrace!": {t: TypeBuiltin, s: "btrace!", bu: Value.Btrace},
 	"strace!": {t: TypeBuiltin, s: "strace!", bu: Value.Strace},
 	"itrace!": {t: TypeBuiltin, s: "itrace!", bu: Value.Itrace},
-	"open-file": {t: TypeBuiltin, s: "open-file", bu: Value.FileOpen},
-	"stream-read": {t: TypeBuiltin, s: "stream-read", bu: Value.StreamRead},
-	"stream-read-all": {
-		t: TypeBuiltin,
-		s: "stream-read-all",
-		bu: Value.StreamReadAll,
-	},
+	"readfile": {t: TypeBuiltin, s: "readfile", bu: Value.ReadFile},
+	"writefile": {t: TypeBuiltin, s: "writefile", bu: Value.ReadFile},
+	"strsplit": {t: TypeBuiltin, s: "strsplit", bu: Value.ReadFile},
+	"nth": {t: TypeBuiltin, s: "nth", bu: Value.Nth},
+	"head": {t: TypeBuiltin, s: "head", bu: Value.Head},
+	"tail": {t: TypeBuiltin, s: "tail", bu: Value.Tail},
+	"last": {t: TypeBuiltin, s: "last", bu: Value.Last},
 }
 
 func (a Value) Eq2(b Value) bool {
@@ -225,19 +225,11 @@ func (callee Value) bPrint(args List) *Value {
 	case TypeStr:
 		fmt.Printf("%s\n", args[0].s)
 	case TypeSym:
-		fmt.Printf("[sym %s]\n", args[0].s)
+		fmt.Printf("'%s\n", args[0].s)
 	case TypeFn:
 		fmt.Println("[fn]")
 	case TypeList:
-		if len(args[0].l) == 2 &&
-			args[0].l[0].t == TypeSym &&
-			args[0].l[0].s == "quote" {
-			fmt.Print("'")
-			args[0].l[1].Print()
-			fmt.Println()
-			break
-		}
-		fmt.Print("(")
+		fmt.Print("'(")
 		for i := range args[0].l {
 			if i != 0 {
 				fmt.Print(" ")
@@ -248,8 +240,6 @@ func (callee Value) bPrint(args List) *Value {
 		fmt.Println()
 	case TypeBuiltin:
 		fmt.Printf("[builtin (%s)]\n", args[0].s)
-	case TypeStream:
-		fmt.Printf("[stream]\n")
 	default:
 		fmt.Printf("[unknown (%d)]\n", args[0].t)
 	}
@@ -316,68 +306,97 @@ func (callee Value) Strace(args List) *Value {
 	return nil
 }
 
-func (callee Value) FileOpen(args List) *Value {
+func (callee Value) ReadFile(args List) *Value {
 	if len(args) != 1 {
-		throw("%s, line %d: 'file-open' takes 1 arg, got %d",
+		throw("%s, line %d: 'readfile' takes 1 arg (filename), got %d",
 			callee.file, callee.line, len(args))
 		return &Value{t: TypeError}
 	}
 
-	f, err := os.Open(args[0].String())
+	f, err := os.ReadFile(args[0].String())
 	if err != nil {
 		fmt.Println(err)
 		return &Value{t: TypeError}
 	}
 
 	return &Value{
-		t: TypeStream,
-		st: f,
+		t: TypeStr,
+		s: string(f),
 	}
 }
 
-func (callee Value) StreamRead(args List) *Value {
+func (callee Value) WriteFile(args List) *Value {
 	if len(args) != 2 {
-		throw("%s, line %d: 'stream-read' takes 2 args, got %d",
+		throw("%s, line %d: 'writefile' takes 2 args (filename data), got %d",
 			callee.file, callee.line, len(args))
 		return &Value{t: TypeError}
 	}
 
-	buf := make([]byte, args[1].Int())
-	s := args[0].Stream()
-	if s == nil {
-		return &Value{t: TypeError}
-	}
-	_, err := s.Read(buf)
+	err := os.WriteFile(args[0].String(), []byte(args[1].String()), 0666)
 	if err != nil {
 		fmt.Println(err)
 		return &Value{t: TypeError}
 	}
+	return nil
+}
 
+func (callee Value) StrSplit(args List) *Value {
+	if len(args) != 2 {
+		throw("%s, line %d: 'strsplit' takes 2 args (str delim), got %d",
+			callee.file, callee.line, len(args))
+		return &Value{t: TypeError}
+	}
+
+	strs := strings.Split(args[0].String(), args[1].String())
+	
+	l := List{}
+	for _, str := range strs {
+		l = append(l, Value{
+			t: TypeStr,
+			s: str,
+		})
+	}
 	return &Value{
-		t: TypeStr,
-		s: string(buf),
+		t: TypeList,
+		l: l,
 	}
 }
 
-func (callee Value) StreamReadAll(args List) *Value {
-	if len(args) != 1 {
-		throw("%s, line %d: 'stream-read' takes 2 args, got %d",
+func (callee Value) Nth(args List) *Value {
+	if len(args) != 2 {
+		throw("%s, line %d: 'nth' takes 2 args (n list), got %d",
 			callee.file, callee.line, len(args))
 		return &Value{t: TypeError}
 	}
+	return &args[1].List()[args[0].Int()]
+}
 
-	s := args[0].Stream()
-	if s == nil {
+func (callee Value) Head(args List) *Value {
+	if len(args) != 1 {
+		throw("%s, line %d: 'head' takes 1 args (list), got %d",
+			callee.file, callee.line, len(args))
 		return &Value{t: TypeError}
 	}
-	buf, err := io.ReadAll(s)
-	if err != nil {
-		fmt.Println(err)
+	return &args[0].List()[0]
+}
+
+func (callee Value) Tail(args List) *Value {
+	if len(args) != 1 {
+		throw("%s, line %d: 'tail' takes 1 args (list), got %d",
+			callee.file, callee.line, len(args))
 		return &Value{t: TypeError}
 	}
+	v := args[0]
+	v.l = v.List()[1:]
+	return &v
+}
 
-	return &Value{
-		t: TypeStr,
-		s: string(buf),
+func (callee Value) Last(args List) *Value {
+	if len(args) != 1 {
+		throw("%s, line %d: 'last' takes 1 args (list), got %d",
+			callee.file, callee.line, len(args))
+		return &Value{t: TypeError}
 	}
+	l := args[0].List()
+	return &l[len(l) - 1]
 }
