@@ -7,7 +7,7 @@ import (
 )
 
 var rd *bufio.Reader
-var fromfile = false
+var fromfile = true
 
 func die(f string, args ...any) {
 	fmt.Printf(f, args...)
@@ -26,6 +26,7 @@ func throw(f string, args ...any) {
 func main() {
 	root := Fn{locals: nil}
 	if len(os.Args) == 1 {
+		fromfile = false
 		rd = bufio.NewReader(os.Stdin)
 		for {
 			root.first = &Block{fn: &root}
@@ -34,7 +35,6 @@ func main() {
 			root.first.Run()
 		}
 	} else if len(os.Args) == 2 {
-		fromfile = true
 		reader, err := os.Open(os.Args[1])
 		rd = bufio.NewReader(reader)
 		if err != nil {
