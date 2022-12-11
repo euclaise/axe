@@ -70,8 +70,8 @@ func (ins Ins) Run(fn *Fn) bool {
 			val, ok = globals[ins.imm.s]
 		}
 		if !ok {
-			throw("Line %d (vm): Could not find variable %s",
-				ins.imm.line, ins.imm.s)
+			throw("%s, line %d (vm): Could not find variable %s",
+				ins.imm.file, ins.imm.line, ins.imm.s)
 			return false
 		}
 		stack.Push(val)
@@ -85,7 +85,7 @@ func (ins Ins) Run(fn *Fn) bool {
 	case InsIf:
 		cond := stack.Pop()
 		if cond.t != TypeBool {
-			throw("Line %d: 'if' on non-bool", cond.line)
+			throw("%s, line %d: 'if' on non-bool", cond.file, cond.line)
 			return false
 		}
 		if cond.b {
@@ -119,7 +119,8 @@ func (ins Ins) Run(fn *Fn) bool {
 				return false
 			}
 		} else {
-			throw("Line %d: Call to non-fn (%d)", callee.line, callee.t)
+			throw("%s, line %d: Call to non-fn (%d)",
+				callee.file, callee.line, callee.t)
 			fmt.Print("Value: ")
 			callee.Print()
 			fmt.Println()

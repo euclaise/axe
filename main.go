@@ -28,6 +28,7 @@ func main() {
 	if len(os.Args) == 1 {
 		fromfile = false
 		rd = bufio.NewReader(os.Stdin)
+		filename = "interpreter"
 		for {
 			root.first = &Block{fn: &root}
 			fmt.Print("> ")
@@ -41,6 +42,8 @@ func main() {
 			die("Could not read file %s\nUsage: %s [file]",
 				os.Args[1], os.Args[0])
 		}
+
+		filename = os.Args[1]
 
 		v := Value{t: TypeSym}
 		root.first = &Block{fn: &root}

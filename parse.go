@@ -9,6 +9,7 @@ import (
 const EOF = 0
 
 var line = 1
+var filename string
 
 func PeekRune() rune {
 	r, _, err := rd.ReadRune()
@@ -26,7 +27,7 @@ func PeekRune() rune {
 func GetRune() rune {
 	r, _, err := rd.ReadRune()
 	if err == io.EOF {
-		die("Unexpected early EOF")
+		die("%s: Unexpected early EOF", filename)
 	} else if err != nil {
 		panic(err)
 	}
@@ -44,17 +45,16 @@ func SkipWS() rune {
 	}
 	if r == ';' {
 		for r != '\n' {
-			GetRune()
+			r = GetRune()
 		}
 		line++
 		SkipWS()
 	}
-	return r
+	return PeekRune()
 }
 
 func GetValue() Value {
-	v := Value{line: line}
-
+	v := Value{line: line, file: filename}
 	r := SkipWS()
 
 	if r == 0 {
@@ -100,7 +100,8 @@ func GetValue() Value {
 			GetRune()
 			tmp = tmp + string(r)
 			if !unicode.IsDigit(r) {
-				die("Line %d: Started float, but didn't end, \"%s\"", line, tmp)
+				die("%s, line %d: Started float, but didn't end, \"%s\"",
+					filename, line, tmp)
 			}
 			for unicode.IsDigit(r) {
 				GetRune()
@@ -120,7 +121,7 @@ func GetValue() Value {
 		}
 		if v.s == "" {
 			GetRune()
-			throw("Line %d: Unbalanced rparen", line)
+			throw("%s, line %d: Unbalanced rparen", filename, line)
 			return Value{}
 		}
 
@@ -144,7 +145,7 @@ func GetList() List {
 
 	r = GetRune()
 	if r != '(' {
-		die("Line %d: Tried to start list without '('", line)
+		die("%s, line %d: Tried to start list without '('", filename, line)
 	}
 	for PeekRune() != ')' {
 		res = append(res, GetValue())

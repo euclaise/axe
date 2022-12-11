@@ -28,6 +28,7 @@ type Value struct {
 	bu func(Value, List) *Value
 
 	line int
+	file string
 }
 
 type List []Value

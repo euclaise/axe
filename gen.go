@@ -44,12 +44,13 @@ func (b *Block) Gen(v Value) bool {
 		if found {
 			b.body = append(b.body, Ins{op: InsLoadV, imm: v})
 		} else {
-			throw("Line %d: Failed to find variable %s", v.line, v.s)
+			throw("%s, line %d: Failed to find variable %s",
+				v.file, v.line, v.s)
 			return false
 		}
 	case TypeList:
 		if len(v.l) == 0 {
-			throw("Line %d: Empty expression", v.line)
+			throw("%s, line %d: Empty expression", v.file, v.line)
 			return false
 		}
 		switch v.l[0].s {
@@ -67,17 +68,20 @@ func (b *Block) Gen(v Value) bool {
 			newf := Fn{locals: map[string]Value{}}
 
 			if len(v.l) != 3 {
-				throw("Line %d: fn takes 2 args, got %d", v.l[0].line, len(v.l))
+				throw("%s, line %d: fn takes 2 args, got %d",
+					v.l[0].file, v.l[0].line, len(v.l))
 				return false
 			}
 			if v.l[1].t != TypeList {
-				throw("Line %d: Args should be a list", v.l[1].line)
+				throw("%s, line %d: Args should be a list",
+					v.l[1].file, v.l[1].line)
 				return false
 			}
 
 			for _, arg := range v.l[1].l {
 				if arg.t != TypeSym {
-					throw("Line %d: Args should be symbols", arg.line)
+					throw("%s, line %d: Args should be symbols",
+						arg.file, arg.line)
 					return false
 				}
 				newf.args = append(newf.args, arg.s)
@@ -95,22 +99,25 @@ func (b *Block) Gen(v Value) bool {
 			newf := Fn{locals: map[string]Value{}, macro: true}
 
 			if len(v.l) != 4 {
-				throw("Line %d: macro takes 2 args, got %d",
-						v.l[0].line, len(v.l))
+				throw("%s, line %d: macro takes 2 args, got %d",
+						v.l[0].file, v.l[0].line, len(v.l))
 				return false
 			}
 			if v.l[1].t != TypeSym {
-				throw("Line %d: Macro name must be a sym", v.l[1].line)
+				throw("%s, line %d: Macro name must be a sym",
+					v.l[1].file, v.l[1].line)
 			}
 
 			if v.l[2].t != TypeList {
-				throw("Line %d: Args should be a list", v.l[1].line)
+				throw("%s, line %d: Args should be a list",
+					v.l[1].file, v.l[1].line)
 				return false
 			}
 
 			for _, arg := range v.l[2].l {
 				if arg.t != TypeSym {
-					throw("Line %d: Args should be symbols", arg.line)
+					throw("%s, line %d: Args should be symbols",
+						arg.file, arg.line)
 					return false
 				}
 				newf.args = append(newf.args, arg.s)
@@ -136,8 +143,8 @@ func (b *Block) Gen(v Value) bool {
 			// (mu $expr)
 			newb := Block{[]Ins{}, b.fn}
 			if len(v.l) != 2 {
-				throw("Line %d: mu takes 1 args, got %d",
-					v.l[0].line, len(v.l))
+				throw("%s, line %d: mu takes 1 args, got %d",
+					v.l[0].file, v.l[0].line, len(v.l))
 			}
 			newb.Gen(v.l[1])
 			b.body = append(b.body, Ins{
@@ -155,8 +162,8 @@ func (b *Block) Gen(v Value) bool {
 			bf := &Block{fn: b.fn}
 
 			if len(v.l) != 4 {
-				throw("Line %d: if takes 3 args (cond, true, false), got %d",
-					v.l[0].line, len(v.l))
+				throw("%s, line %d: if takes 3 args (cond, true, false), got %d",
+					v.l[0].file, v.l[0].line, len(v.l))
 				return false
 			}
 
@@ -167,8 +174,8 @@ func (b *Block) Gen(v Value) bool {
 		case "cond":
 			// (cond ($cond1 $expr1) &($cond2 $expr2) &...)
 			if len(v.l) < 2 {
-				throw("Line %d: cond requires at least one condition",
-					v.l[0].line)
+				throw("%s, line %d: cond requires at least one condition",
+					v.l[0].file, v.l[0].line)
 				return false
 			}
 
@@ -178,8 +185,8 @@ func (b *Block) Gen(v Value) bool {
 				bf := &Block{fn: b.fn}
 
 				if arg.t != TypeList || len(arg.l) != 2 {
-					throw("Line %d: Conditions should be of (cond expr) format",
-						arg.line)
+					throw("%s, line %d: Conditions should be of (cond expr) format",
+						arg.file, arg.line)
 					return false
 				}
 
@@ -197,7 +204,7 @@ func (b *Block) Gen(v Value) bool {
 		case "=":
 			// (= $var $expr)
 			if len(v.l) != 3 {
-				throw("Line %d: Wrong arg count for '='", v.line)
+				throw("%s, line %d: Wrong arg count for '='", v.file, v.line)
 				return false
 			}
 			b.SetVar(v.l[1].s, Value{})
