@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"io"
 )
 
 var globals = map[string]Value{
@@ -24,6 +25,13 @@ var globals = map[string]Value{
 	"btrace!": {t: TypeBuiltin, s: "btrace!", bu: Value.Btrace},
 	"strace!": {t: TypeBuiltin, s: "strace!", bu: Value.Strace},
 	"itrace!": {t: TypeBuiltin, s: "itrace!", bu: Value.Itrace},
+	"open-file": {t: TypeBuiltin, s: "open-file", bu: Value.FileOpen},
+	"stream-read": {t: TypeBuiltin, s: "stream-read", bu: Value.StreamRead},
+	"stream-read-all": {
+		t: TypeBuiltin,
+		s: "stream-read-all",
+		bu: Value.StreamReadAll,
+	},
 }
 
 func (a Value) Eq2(b Value) bool {
@@ -50,18 +58,18 @@ func (a Value) Eq2(b Value) bool {
 		}
 		return true
 	default:
-		throw("Line %d: '==' - unhandled type (%d)",
-			b.line, b.t)
+		throw("%s, line %d: '==' - unhandled type (%d)",
+			b.file, b.line, b.t)
 		return false
 	}
 }
 
 func (callee Value) Eq(args List) *Value {
 	if len(args) < 2 {
-		throw("Line %d: Too few args to '=='", callee.line)
+		throw("%s, line %d: Too few args to '=='", callee.file, callee.line)
 		return &Value{t: TypeError}
 	}
-	res := Value{t: TypeBool, b: true, line: callee.line}
+	res := Value{t: TypeBool, b: true, file: callee.file, line: callee.line}
 	for _, val := range args[1:] {
 		if !val.Eq2(args[0]) {
 			res.b = false
@@ -79,13 +87,13 @@ func (callee Value) Ne(args List) *Value {
 
 func (callee Value) And(args List) *Value {
 	if len(args) < 2 {
-		throw("Line %d: Too few args to 'and'", callee.line)
+		throw("%s, line %d: Too few args to 'and'", callee.file, callee.line)
 		return &Value{t: TypeError}
 	}
-	res := Value{t: TypeBool, b: true, line: callee.line}
+	res := Value{t: TypeBool, b: true, file: callee.file, line: callee.line}
 	for _, val := range args {
 		if val.t != TypeBool {
-			throw("Line %d: 'and' on non-bool", val.line)
+			throw("%s, line %d: 'and' on non-bool", callee.file, val.line)
 			return &Value{t: TypeError}
 		}
 		res.b = res.b && val.b
@@ -95,151 +103,107 @@ func (callee Value) And(args List) *Value {
 
 func (callee Value) Or(args List) *Value {
 	if len(args) < 2 {
-		throw("Line %d: Too few args to 'or'", callee.line)
+		throw("%s, line %d: Too few args to 'or'", callee.file, callee.line)
 		return &Value{t: TypeError}
 	}
-	res := Value{t: TypeBool, b: false, line: callee.line}
+	res := Value{t: TypeBool, b: false, file: callee.file, line: callee.line}
 	for _, val := range args {
-		if val.t != TypeBool {
-			throw("Line %d: 'or' on non-bool", val.line)
-			return &Value{t: TypeError}
-		}
-		res.b = res.b || val.b
+		res.b = res.b || val.Bool()
 	}
 	return &res
 }
 
 func (callee Value) Lt(args List) *Value { 
 	if len(args) != 2 {
-		throw("Line %d: Wrong number of args to '<'", callee.line)
+		throw("%s, line %d: Wrong number of args to '<'",
+			callee.file, callee.line)
 		return &Value{t: TypeError}
 	}
 	res := Value{t: TypeBool, line: callee.line}
-	if args[0].t != TypeFloat || args[1].t != TypeFloat {
-		throw("Line %d: '<' only takes numeric args", args[1].line)
-		return &Value{t: TypeError}
-	}
-	res.b = args[0].f < args[1].f
+	res.b = args[0].Float() < args[1].Float()
 	return &res
 }
 
 func (callee Value) Le(args List) *Value {
 	if len(args) != 2 {
-		throw("Line %d: Wrong number of args to '<='", callee.line)
-		return &Value{t: TypeError}
-	}
-	if args[0].t != TypeFloat || args[1].t != TypeFloat {
-		throw("Line %d: '<=' only takes numeric args", args[1].line)
+		throw("%s, line %d: Wrong number of args to '<='",
+			callee.file, callee.line)
 		return &Value{t: TypeError}
 	}
 	res := Value{t: TypeBool, b: false, line: callee.line}
-	res.b = args[0].f <= args[1].f
+	res.b = args[0].Float() <= args[1].Float()
 	return &res
 }
 
 func (callee Value) Gt(args List) *Value {
 	if len(args) != 2 {
-		throw("Line %d: Wrong number of args to '>'", callee.line)
+		throw("%s, line %d: Wrong number of args to '>'",
+			callee.file, callee.line)
 		return &Value{t: TypeError}
 	}
-	if args[0].t != TypeFloat || args[1].t != TypeFloat {
-		throw("Line %d: '>' only takes numeric args", args[1].line)
-		return &Value{t: TypeError}
-	}
-	res := Value{t: TypeBool, b: false, line: callee.line}
-	res.b = args[0].f > args[1].f
+	res := Value{t: TypeBool, b: false, file: callee.file, line: callee.line}
+	res.b = args[0].Float() > args[1].Float()
 	return &res
 }
 
 func (callee Value) Ge(args List) *Value {
 	if len(args) != 2 {
-		throw("Line %d: Wrong number of args to '>='", callee.line)
-		return &Value{t: TypeError}
-	}
-	if args[0].t != TypeFloat || args[1].t != TypeFloat {
-		throw("Line %d: '>=' only takes numeric args", args[1].line)
+		throw("%s, line %d: Wrong number of args to '>='",
+			callee.file, callee.line)
 		return &Value{t: TypeError}
 	}
 	res := Value{t: TypeBool, b: false, line: callee.line}
-	res.b = args[0].f >= args[1].f
+	res.b = args[0].Float() >= args[1].Float()
 	return &res
 }
 
 func (callee Value) Add(args List) *Value {
 	if len(args) < 2 {
-		throw("Line %d: Too few args to '+'", callee.line)
+		throw("%s, line %d: Too few args to '+'", callee.file, callee.line)
 		return &Value{t: TypeError}
 	}
-	if args[0].t != TypeFloat {
-		throw("Line %d: '+' only takes numeric args", args[0].line)
-		return &Value{t: TypeError}
-	}
+	args[0].Float()
 	res := args[0]
 	for _, arg := range args[1:] {
-		if arg.t != TypeFloat {
-			throw("Line %d: '+' only takes numeric args", arg.line)
-			return &Value{t: TypeError}
-		}
-		res.f += arg.f
+		res.f += arg.Float()
 	}
 	return &res
 }
 
 func (callee Value) Sub(args List) *Value {
 	if len(args) < 2 {
-		throw("Line %d: Too few args to '-'", callee.line)
+		throw("%s, line %d: Too few args to '-'", callee.file, callee.line)
 		return &Value{t: TypeError}
 	}
-	if args[0].t != TypeFloat {
-		throw("Line %d: '-' only takes numeric args", args[0].line)
-		return &Value{t: TypeError}
-	}
+	args[0].Float()
 	res := args[0]
 	for _, arg := range args[1:] {
-		if arg.t != TypeFloat {
-			throw("Line %d: '-' only takes numeric args", arg.line)
-			return &Value{t: TypeError}
-		}
-		res.f -= arg.f
+		res.f -= arg.Float()
 	}
 	return &res
 }
 
 func (callee Value) Mul(args List) *Value {
 	if len(args) < 2 {
-		throw("Line %d: Too few args to '*'", callee.line)
+		throw("%s, line %d: Too few args to '*'", callee.file, callee.line)
 		return &Value{t: TypeError}
 	}
+	args[0].Float()
 	res := args[0]
-	if args[0].t != TypeFloat {
-		throw("Line %d: '*' only takes numeric args", args[0].line)
-		return &Value{t: TypeError}
-	}
 	for _, arg := range args[1:] {
-		if arg.t != TypeFloat {
-			throw("Line %d: '*' only takes numeric args", arg.line)
-			return &Value{t: TypeError}
-		}
-		res.f *= arg.f
+		res.f *= arg.Float()
 	}
 	return &res
 }
 
 func (callee Value) Div(args List) *Value {
 	if len(args) < 2 {
-		throw("Line %d: Too few args to '/'", callee.line)
+		throw("%s, line %d: Too few args to '/'", callee.file, callee.line)
 		return &Value{t: TypeError}
 	}
+	args[0].Float()
 	res := args[0]
-	if args[0].t != TypeFloat {
-		throw("Line %d: '/' only takes numeric args", args[0].line)
-		return &Value{t: TypeError}
-	}
-	for _, arg := range args {
-		if arg.t != TypeFloat {
-			throw("Line %d: '/' only takes numeric args", arg.line)
-			return &Value{t: TypeError}
-		}
+		for _, arg := range args {
 		res.f /= arg.f
 	}
 	return &res
@@ -284,6 +248,8 @@ func (callee Value) bPrint(args List) *Value {
 		fmt.Println()
 	case TypeBuiltin:
 		fmt.Printf("[builtin (%s)]\n", args[0].s)
+	case TypeStream:
+		fmt.Printf("[stream]\n")
 	default:
 		fmt.Printf("[unknown (%d)]\n", args[0].t)
 	}
@@ -295,15 +261,11 @@ func (callee Value) Exit(args List) *Value {
 		os.Exit(0)
 	}
 	if len(args) > 2 {
-		throw("'exit' takes at most 1 args, not %d", len(args))
+		throw("%s, line %d: 'exit' takes at most 1 args, not %d",
+			callee.file, callee.line, len(args))
 		return &Value{t: TypeError}
 	}
-	if args[0].t != TypeFloat {
-		throw("Line %d: Trying to exit with non-numeric code",
-			args[0].line)
-		return &Value{t: TypeError}
-	}
-	os.Exit(int(args[1].f))
+	os.Exit(args[0].Int())
 	return nil
 }
 
@@ -320,7 +282,8 @@ func (callee Value) Dumps(args List) *Value {
 			stack[i].Print()
 		}
 	} else {
-		throw("'dumps!' takes at most 1 args, not %d", len(args))
+		throw("%s, line %d: 'dumps!' takes at most 1 args, not %d",
+			callee.file, callee.line, len(args))
 		return &Value{t: TypeError}
 	}
 	return nil
@@ -328,29 +291,93 @@ func (callee Value) Dumps(args List) *Value {
 
 func (callee Value) Btrace(args List) *Value {
 	if len(args) != 0 {
-		throw("'btrace!' takes no args")
+		throw("%s, line %d: 'btrace!' takes no args", callee.file, callee.line)
 		return &Value{t: TypeError}
-	} else {
-		btrace = !btrace
 	}
+	btrace = !btrace
 	return nil
 }
 
 func (callee Value) Itrace(args List) *Value {
 	if len(args) != 0 {
-		throw("'itrace!' takes no args")
+		throw("%s, line %d: 'itrace!' takes no args", callee.file, callee.line)
 		return &Value{t: TypeError}
-	} else {
-		itrace = !itrace
 	}
+	itrace = !itrace
 	return nil
 }
 
 func (callee Value) Strace(args List) *Value {
 	if len(args) != 0 {
-		throw("'strace!' takes no args")
-	} else {
-		strace = !strace
-	}
+		throw("%s, line %d: 'strace!' takes no args", callee.file, callee.line)
+		return &Value{t: TypeError}
+	} 
+	strace = !strace
 	return nil
+}
+
+func (callee Value) FileOpen(args List) *Value {
+	if len(args) != 1 {
+		throw("%s, line %d: 'file-open' takes 1 arg, got %d",
+			callee.file, callee.line, len(args))
+		return &Value{t: TypeError}
+	}
+
+	f, err := os.Open(args[0].String())
+	if err != nil {
+		fmt.Println(err)
+		return &Value{t: TypeError}
+	}
+
+	return &Value{
+		t: TypeStream,
+		st: f,
+	}
+}
+
+func (callee Value) StreamRead(args List) *Value {
+	if len(args) != 2 {
+		throw("%s, line %d: 'stream-read' takes 2 args, got %d",
+			callee.file, callee.line, len(args))
+		return &Value{t: TypeError}
+	}
+
+	buf := make([]byte, args[1].Int())
+	s := args[0].Stream()
+	if s == nil {
+		return &Value{t: TypeError}
+	}
+	_, err := s.Read(buf)
+	if err != nil {
+		fmt.Println(err)
+		return &Value{t: TypeError}
+	}
+
+	return &Value{
+		t: TypeStr,
+		s: string(buf),
+	}
+}
+
+func (callee Value) StreamReadAll(args List) *Value {
+	if len(args) != 1 {
+		throw("%s, line %d: 'stream-read' takes 2 args, got %d",
+			callee.file, callee.line, len(args))
+		return &Value{t: TypeError}
+	}
+
+	s := args[0].Stream()
+	if s == nil {
+		return &Value{t: TypeError}
+	}
+	buf, err := io.ReadAll(s)
+	if err != nil {
+		fmt.Println(err)
+		return &Value{t: TypeError}
+	}
+
+	return &Value{
+		t: TypeStr,
+		s: string(buf),
+	}
 }

@@ -16,6 +16,7 @@ func die(f string, args ...any) {
 }
 
 func throw(f string, args ...any) {
+	thrown = true
 	fmt.Printf(f, args...)
 	fmt.Println()
 	if fromfile {

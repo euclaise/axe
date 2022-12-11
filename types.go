@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+)
 
 const (
 	TypeDummy = iota
@@ -9,6 +12,8 @@ const (
 	TypeBool
 	TypeStr
 	TypeSym
+	TypeStream
+	TypeWriter
 	TypeFn
 	TypeList
 	TypeBlock
@@ -26,12 +31,87 @@ type Value struct {
 	l  List
 	n  int
 	bu func(Value, List) *Value
+	st io.ReadSeekCloser
+	wr io.WriteCloser
 
 	line int
 	file string
 }
 
 type List []Value
+
+type Stream io.ReadSeekCloser
+
+var thrown = false
+
+func (v Value) Float() float64 {
+	if v.t != TypeFloat {
+		throw("%s line %d: Type mismatch, Expected numeric", v.file, v.line)
+	}
+	return v.f
+}
+
+func (v Value) Int() int {
+	if v.t != TypeFloat {
+		throw("%s line %d: Type mismatch, Expected numeric", v.file, v.line)
+	}
+	return int(v.f)
+}
+
+func (v Value) Bool() bool {
+	if v.t != TypeBool {
+		throw("%s line %d: Type mismatch, Expected bool", v.file, v.line)
+	}
+	return v.b
+}
+
+func (v Value) String() string {
+	if v.t != TypeStr {
+		throw("%s line %d: Type mismatch, Expected str", v.file, v.line)
+	}
+	return v.s
+}
+
+func (v Value) Symbol() string {
+	if v.t != TypeSym {
+		throw("%s line %d: Type mismatch, Expected sym", v.file, v.line)
+	}
+	return v.s
+}
+
+func (v Value) Fn() Fn {
+	if v.t != TypeFn {
+		throw("%s line %d: Type mismatch, Expected fn", v.file, v.line)
+	}
+	return v.fn
+}
+
+func (v Value) List() List {
+	if v.t != TypeList {
+		throw("%s line %d: Type mismatch, Expected list", v.file, v.line)
+	}
+	return v.l
+}
+
+func (v Value) Builtin() func(Value, List) *Value {
+	if v.t != TypeBuiltin {
+		throw("%s line %d: Type mismatch, Expected builtin", v.file, v.line)
+	}
+	return v.bu
+}
+
+func (v Value) Stream() Stream {
+	if v.t != TypeStream {
+		throw("%s line %d: Type mismatch, Expected stream", v.file, v.line)
+	}
+	return v.st
+}
+func (v Value) Writer() io.WriteCloser {
+	if v.t != TypeWriter {
+		throw("%s line %d: Type mismatch, Expected writer", v.file, v.line)
+	}
+	return v.wr
+}
 
 func (v Value) Print() {
 	switch v.t {
@@ -74,6 +154,8 @@ func (v Value) Print() {
 		fmt.Print("[block]")
 	case TypeBuiltin:
 		fmt.Print("[builtin]")
+	case TypeStream:
+		fmt.Printf("[stream]\n")
 	default:
 		fmt.Println("[nil]")
 	}

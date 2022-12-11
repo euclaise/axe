@@ -24,7 +24,6 @@ func (b *Block) LookupVar(s string) *Value {
 	return nil
 }
 
-
 func (b *Block) Gen(v Value) bool {
 	switch v.t {
 	case TypeFloat,
@@ -72,19 +71,14 @@ func (b *Block) Gen(v Value) bool {
 					v.l[0].file, v.l[0].line, len(v.l))
 				return false
 			}
-			if v.l[1].t != TypeList {
-				throw("%s, line %d: Args should be a list",
-					v.l[1].file, v.l[1].line)
-				return false
-			}
 
-			for _, arg := range v.l[1].l {
+			for _, arg := range v.l[1].List() {
 				if arg.t != TypeSym {
 					throw("%s, line %d: Args should be symbols",
 						arg.file, arg.line)
 					return false
 				}
-				newf.args = append(newf.args, arg.s)
+				newf.args = append(newf.args, arg.Symbol())
 				newf.locals[arg.s] = Value{}
 			}
 			newf.first = new(Block)
@@ -103,18 +97,8 @@ func (b *Block) Gen(v Value) bool {
 						v.l[0].file, v.l[0].line, len(v.l))
 				return false
 			}
-			if v.l[1].t != TypeSym {
-				throw("%s, line %d: Macro name must be a sym",
-					v.l[1].file, v.l[1].line)
-			}
 
-			if v.l[2].t != TypeList {
-				throw("%s, line %d: Args should be a list",
-					v.l[1].file, v.l[1].line)
-				return false
-			}
-
-			for _, arg := range v.l[2].l {
+			for _, arg := range v.l[2].List() {
 				if arg.t != TypeSym {
 					throw("%s, line %d: Args should be symbols",
 						arg.file, arg.line)
@@ -131,7 +115,7 @@ func (b *Block) Gen(v Value) bool {
 				imm: Value{t: TypeFn, fn: newf},
 			})
 
-			b.SetVar(v.l[1].s, Value{t: TypeFn, fn: newf})
+			b.SetVar(v.l[1].Symbol(), Value{t: TypeFn, fn: newf})
 			b.body = append(b.body, Ins{
 				op: InsStoreV,
 				imm: Value{
@@ -184,14 +168,14 @@ func (b *Block) Gen(v Value) bool {
 				bt := &Block{fn: b.fn}
 				bf := &Block{fn: b.fn}
 
-				if arg.t != TypeList || len(arg.l) != 2 {
+				if len(arg.l) != 2 {
 					throw("%s, line %d: Conditions should be of (cond expr) format",
 						arg.file, arg.line)
 					return false
 				}
 
-				cur.Gen(arg.l[0])
-				bt.Gen(arg.l[1])
+				cur.Gen(arg.List()[0])
+				bt.Gen(arg.List()[1])
 				cur.body = append(cur.body, Ins{op: InsIf, bt: bt, bf: bf})
 				cur = bf
 			}
@@ -207,7 +191,7 @@ func (b *Block) Gen(v Value) bool {
 				throw("%s, line %d: Wrong arg count for '='", v.file, v.line)
 				return false
 			}
-			b.SetVar(v.l[1].s, Value{})
+			b.SetVar(v.l[1].Symbol(), Value{})
 
 			b.Gen(v.l[2])
 			b.body = append(b.body, Ins{op: InsStoreV, imm: v.l[1]})

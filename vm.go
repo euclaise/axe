@@ -84,11 +84,7 @@ func (ins Ins) Run(fn *Fn) bool {
 		}
 	case InsIf:
 		cond := stack.Pop()
-		if cond.t != TypeBool {
-			throw("%s, line %d: 'if' on non-bool", cond.file, cond.line)
-			return false
-		}
-		if cond.b {
+		if cond.Bool() {
 			ins.bt.Run()
 		} else {
 			ins.bf.Run()
@@ -113,7 +109,10 @@ func (ins Ins) Run(fn *Fn) bool {
 				fmt.Printf(">>> btrace: %s\n", callee.s)
 			}
 			v := callee.bu(callee, args)
-			if v != nil && v.t != TypeError {
+			if thrown {
+				thrown = false
+				stack.Push(Value{t: TypeError})
+			} else if v != nil {
 				stack.Push(*v)
 			} else {
 				return false
