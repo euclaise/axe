@@ -35,6 +35,8 @@ func main() {
 			fmt.Print("> ")
 			root.first.Gen(GetValue())
 			root.first.Run()
+			stack.Top().Print()
+			fmt.Println()
 		}
 	} else if len(os.Args) == 2 {
 		reader, err := os.Open(os.Args[1])
