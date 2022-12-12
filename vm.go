@@ -10,12 +10,14 @@ const (
 	InsLoadV
 	InsIf
 	InsCall
+	InsEval
 )
 
 type Ins struct {
 	op   int
 	imm  Value
 	argn int
+	from *Block
 	bt   *Block // true block
 	bf   *Block // false block
 }
@@ -89,6 +91,12 @@ func (ins Ins) Run(fn *Fn) bool {
 		} else {
 			ins.bf.Run()
 		}
+	case InsEval:
+		expr := stack.Pop()
+		fn = ins.from.fn
+		b := Block{fn: fn}
+		b.Gen(expr)
+		b.Run()
 	case InsCall:
 		callee := stack.Pop()
 		args := []Value{}

@@ -32,9 +32,9 @@ var builtins = map[string]Value{
 	"head": {t: TypeBuiltin, s: "head", bu: Value.Head},
 	"tail": {t: TypeBuiltin, s: "tail", bu: Value.Tail},
 	"last": {t: TypeBuiltin, s: "last", bu: Value.Last},
-	"append": {t: TypeBuiltin, s: "append", bu: Value.Append},
-	"flat": {t: TypeBuiltin, s: "flat", bu: Value.Flat},
 	"join": {t: TypeBuiltin, s: "join", bu: Value.Join},
+	"merge": {t: TypeBuiltin, s: "merge", bu: Value.Merge},
+	"flat": {t: TypeBuiltin, s: "flat", bu: Value.Flat},
 }
 
 var globals = builtins
@@ -406,20 +406,22 @@ func (callee Value) Last(args List) *Value {
 	return &l[len(l) - 1]
 }
 
-func (callee Value) Append(args List) *Value {
+func (callee Value) Join(args List) *Value {
 	if len(args) != 2 {
-		throw("%s, line %d: 'append' takes 2 args (list ...), got %d",
+		throw("%s, line %d: 'join' takes 2 args (list list), got %d",
 			callee.file, callee.line, len(args))
+		return &Value{t: TypeError}
 	}
 	res := args[0]
-	res.l = append(res.l, args[1])
+	res.l = append(res.l, args[1].List()...)
 	return &res
 }
 
-func (callee Value) Join(args List) *Value {
+func (callee Value) Merge(args List) *Value {
 	if len(args) != 2 {
-		throw("%s, line %d: 'cons' takes 2 args (val val), got %d",
+		throw("%s, line %d: 'merge' takes 2 args (val val), got %d",
 			callee.file, callee.line, len(args))
+		return &Value{t: TypeError}
 	}
 
 	res := callee
@@ -438,8 +440,9 @@ func (callee Value) Join(args List) *Value {
 
 func (callee Value) Flat(args List) *Value {
 	if len(args) != 1 {
-		throw("%s, line %d: 'flat' takes 1 args (list ...), got %d",
+		throw("%s, line %d: 'flat' takes 1 args (list), got %d",
 			callee.file, callee.line, len(args))
+		return &Value{t: TypeError}
 	}
 
 	var rl = List{}

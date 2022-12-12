@@ -1,5 +1,16 @@
 package main
 
+var special = map[string]bool{
+	"fn": true,
+	"mu": true,
+	"macro": true,
+	"=": true,
+	"eval": true,
+	"do": true,
+	"if": true,
+	"cond": true,
+}
+
 func (b *Block) SetVar(s string, v Value) {
 	_, found_global := globals[s]
 	if b.fn.locals != nil {
@@ -29,7 +40,7 @@ func (b *Block) Gen(v Value) bool {
 	case TypeFloat,
 		TypeBool,
 		TypeStr:
-		b.body = append(b.body, Ins{op: InsImm, imm: v})
+		b.body = append(b.body, Ins{op: InsImm, imm: v, from: b})
 	case TypeSym:
 		found := false
 		if b.fn.locals != nil {
@@ -41,7 +52,7 @@ func (b *Block) Gen(v Value) bool {
 		}
 
 		if found {
-			b.body = append(b.body, Ins{op: InsLoadV, imm: v})
+			b.body = append(b.body, Ins{op: InsLoadV, imm: v, from: b})
 		} else {
 			throw("%s, line %d: Failed to find variable %s",
 				v.file, v.line, v.s)
@@ -61,6 +72,7 @@ func (b *Block) Gen(v Value) bool {
 			b.body = append(b.body, Ins{
 				op: InsImm,
 				imm: v.l[1],
+				from: b,
 			})
 		case "fn":
 			// (fn (&a &b &...) $expr)
@@ -87,6 +99,7 @@ func (b *Block) Gen(v Value) bool {
 			b.body = append(b.body, Ins{
 				op:  InsImm,
 				imm: Value{t: TypeFn, fn: newf},
+				from: b,
 			})
 		case "macro":
 			// (fn (&a &b &...) $expr)
@@ -113,6 +126,7 @@ func (b *Block) Gen(v Value) bool {
 			b.body = append(b.body, Ins{
 				op:  InsImm,
 				imm: Value{t: TypeFn, fn: newf},
+				from: b,
 			})
 
 			b.SetVar(v.l[1].Symbol(), Value{t: TypeFn, fn: newf})
@@ -121,6 +135,7 @@ func (b *Block) Gen(v Value) bool {
 				imm: Value{
 					t: TypeFn,
 					fn: newf,
+					from: b,
 				},
 			})
 		case "mu":
@@ -134,6 +149,7 @@ func (b *Block) Gen(v Value) bool {
 			b.body = append(b.body, Ins{
 				op:  InsImm,
 				imm: Value{t: TypeBlock, bl: &newb},
+				from: b,
 			})
 		case "do":
 			// (do $expr1 $expr2 &...)
@@ -154,7 +170,7 @@ func (b *Block) Gen(v Value) bool {
 			b.Gen(v.l[1])
 			bt.Gen(v.l[2])
 			bf.Gen(v.l[3])
-			b.body = append(b.body, Ins{op: InsIf, bt: bt, bf: bf})
+			b.body = append(b.body, Ins{op: InsIf, bt: bt, bf: bf, from: b})
 		case "cond":
 			// (cond ($cond1 $expr1) &($cond2 $expr2) &...)
 			if len(v.l) < 2 {
@@ -176,12 +192,18 @@ func (b *Block) Gen(v Value) bool {
 
 				cur.Gen(arg.List()[0])
 				bt.Gen(arg.List()[1])
-				cur.body = append(cur.body, Ins{op: InsIf, bt: bt, bf: bf})
+				cur.body = append(cur.body, Ins{
+					op: InsIf,
+					bt: bt,
+					bf: bf,
+					from: cur,
+				})
 				cur = bf
 			}
 			cur.body = append(cur.body, Ins{
 				op: InsImm,
 				imm: Value{t: TypeError},
+				from: cur,
 			})
 
 		// First add args (backwards), then callee, then call instruction
@@ -192,7 +214,7 @@ func (b *Block) Gen(v Value) bool {
 				return false
 			}
 			s := v.l[1].Symbol()
-			if _, ok := builtins[s]; ok {
+			if _, ok := builtins[s]; ok || special[s] {
 				throw("%s, line %d: '%s' is a builtin, cannot be rebound",
 					v.l[1].file, v.l[1].line, s)
 					return false
@@ -200,7 +222,15 @@ func (b *Block) Gen(v Value) bool {
 			b.SetVar(s, Value{})
 
 			b.Gen(v.l[2])
-			b.body = append(b.body, Ins{op: InsStoreV, imm: v.l[1]})
+			b.body = append(b.body, Ins{op: InsStoreV, imm: v.l[1], from: b})
+		case "eval":
+			if len(v.l) != 2 {
+				throw("%s, line %d: Wrong arg count for 'eval'", v.file, v.line)
+				return false
+			}
+			b.Gen(v.l[1])
+			b.body = append(b.body, Ins{op: InsEval, imm: v.l[1], from: b})
+
 		default:
 			// ($callee &expr1 &expr2 &...)
 			is_macro := false
@@ -224,6 +254,7 @@ func (b *Block) Gen(v Value) bool {
 								v.l[i],
 							},
 						},
+						from: b,
 					})
 					b.Gen(v.l[0])
 				}
@@ -236,6 +267,7 @@ func (b *Block) Gen(v Value) bool {
 				op:   InsCall,
 				imm:  Value{line: v.l[0].line},
 				argn: len(v.l) - 1,
+				from: b,
 			})
 		}
 	}

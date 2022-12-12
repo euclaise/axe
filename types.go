@@ -32,6 +32,7 @@ type Value struct {
 	st io.ReadSeekCloser
 	wr io.WriteCloser
 
+	from *Block
 	line int
 	file string
 }
