@@ -191,7 +191,13 @@ func (b *Block) Gen(v Value) bool {
 				throw("%s, line %d: Wrong arg count for '='", v.file, v.line)
 				return false
 			}
-			b.SetVar(v.l[1].Symbol(), Value{})
+			s := v.l[1].Symbol()
+			if _, ok := builtins[s]; ok {
+				throw("%s, line %d: '%s' is a builtin, cannot be rebound",
+					v.l[1].file, v.l[1].line, s)
+					return false
+			}
+			b.SetVar(s, Value{})
 
 			b.Gen(v.l[2])
 			b.body = append(b.body, Ins{op: InsStoreV, imm: v.l[1]})

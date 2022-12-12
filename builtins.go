@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var globals = map[string]Value{
+var builtins = map[string]Value{
 	"+": {t: TypeBuiltin, s: "+", bu: Value.Add},
 	"-": {t: TypeBuiltin, s: "-", bu: Value.Sub},
 	"*": {t: TypeBuiltin, s: "*", bu: Value.Mul},
@@ -32,7 +32,12 @@ var globals = map[string]Value{
 	"head": {t: TypeBuiltin, s: "head", bu: Value.Head},
 	"tail": {t: TypeBuiltin, s: "tail", bu: Value.Tail},
 	"last": {t: TypeBuiltin, s: "last", bu: Value.Last},
+	"append": {t: TypeBuiltin, s: "append", bu: Value.Append},
+	"flat": {t: TypeBuiltin, s: "flat", bu: Value.Flat},
+	"join": {t: TypeBuiltin, s: "join", bu: Value.Join},
 }
+
+var globals = builtins
 
 func (a Value) Eq2(b Value) bool {
 	if b.t != a.t {
@@ -399,4 +404,52 @@ func (callee Value) Last(args List) *Value {
 	}
 	l := args[0].List()
 	return &l[len(l) - 1]
+}
+
+func (callee Value) Append(args List) *Value {
+	if len(args) != 2 {
+		throw("%s, line %d: 'append' takes 2 args (list ...), got %d",
+			callee.file, callee.line, len(args))
+	}
+	res := args[0]
+	res.l = append(res.l, args[1])
+	return &res
+}
+
+func (callee Value) Join(args List) *Value {
+	if len(args) != 2 {
+		throw("%s, line %d: 'cons' takes 2 args (val val), got %d",
+			callee.file, callee.line, len(args))
+	}
+
+	res := callee
+	res.t = TypeList
+	switch {
+	case args[0].t == args[1].t:
+		res.l = List{args[0], args[1]}
+	case args[0].t == TypeList && args[1].t != TypeList:
+		res.l = args[0].List()
+		res.l = append(res.l, args[1])
+	case args[0].t != TypeList && args[1].t == TypeList:
+		res.l = append(List{args[0]}, args[1].List()...)
+	}
+	return &res
+}
+
+func (callee Value) Flat(args List) *Value {
+	if len(args) != 1 {
+		throw("%s, line %d: 'flat' takes 1 args (list ...), got %d",
+			callee.file, callee.line, len(args))
+	}
+
+	var rl = List{}
+	for _, l := range args[0].List() {
+		rl = append(rl, l)
+	}
+	return &Value{
+		t: TypeList,
+		l: rl,
+		line: callee.line,
+		file: callee.file,
+	}
 }
