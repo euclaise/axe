@@ -121,7 +121,7 @@ func (v Value) Print() {
 		}
 		fmt.Print(")]")
 	case TypeList:
-		fmt.Print("'(")
+		fmt.Print("(")
 		for i := range v.l {
 			if i != 0 {
 				fmt.Print(" ")

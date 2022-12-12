@@ -229,7 +229,7 @@ func (callee Value) bPrint(args List) *Value {
 	case TypeFn:
 		fmt.Println("[fn]")
 	case TypeList:
-		fmt.Print("'(")
+		fmt.Print("(")
 		for i := range args[0].l {
 			if i != 0 {
 				fmt.Print(" ")
